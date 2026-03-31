@@ -252,12 +252,6 @@ input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--fg
             <option value="w">Actualizaciones de Línea</option>
           </select>
         </div>
-        <div class="form-group">
-          <div class="toggle-row">
-            <input type="checkbox" id="new-is-urgent">
-            <label for="new-is-urgent">Urgente (URG)</label>
-          </div>
-        </div>
       </div>
       <div style="display:flex;gap:8px;margin-top:14px;">
         <button class="btn btn-accent" id="btn-save-new-launch">Guardar hito</button>
@@ -525,12 +519,6 @@ function renderLaunches(filterYearId = '') {
               <option value="w" ${l.group==='w'?'selected':''}>Actualizaciones de Línea</option>
             </select>
           </div>
-          <div class="form-group">
-            <div class="toggle-row">
-              <input type="checkbox" id="urg-${l.id}" ${l.is_urgent?'checked':''} data-table="timeline_launches" data-id="${l.id}" data-field="is_urgent">
-              <label for="urg-${l.id}">Urgente (URG)</label>
-            </div>
-          </div>
         </div>
       </div>`;
     el.appendChild(card);
@@ -600,7 +588,7 @@ document.getElementById('btn-save-new-launch').addEventListener('click', async (
     launch_date: document.getElementById('new-launch-date').value || null,
     position:    Number(document.getElementById('new-position').value) || 0,
     status_tag:  document.getElementById('new-status-tag').value === 'urg' ? null : (document.getElementById('new-status-tag').value || null),
-    is_urgent:   document.getElementById('new-status-tag').value === 'urg' ? true : document.getElementById('new-is-urgent').checked,
+    is_urgent:   document.getElementById('new-status-tag').value === 'urg',
     group:       document.getElementById('new-group').value
   };
 
