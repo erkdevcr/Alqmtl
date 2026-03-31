@@ -559,55 +559,69 @@ function renderYears() {
 function setupCardDrag(card, launchId, yearId) {
   const handle = card.querySelector('.drag-handle');
   if (!handle) return;
-  let didDrag = false;
 
   handle.addEventListener('pointerdown', e => {
-    e.preventDefault();
-    handle.setPointerCapture(e.pointerId);
-    didDrag = false;
-    card.classList.add('dragging');
-    const container = card.parentNode;
+    if (e.button !== undefined && e.button !== 0) return;
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const THRESHOLD = 8;      /* px mínimos para considerar drag */
+    let dragging  = false;
 
     const onMove = ev => {
-      didDrag = true;
-      /* ocultar temporalmente la card para que elementsFromPoint no la detecte */
-      card.style.visibility = 'hidden';
-      const els = document.elementsFromPoint(ev.clientX, ev.clientY);
-      card.style.visibility = '';
-      const target = els.find(el =>
-        el !== card && el.classList.contains('card') && el.parentNode === container
-      );
-      /* limpiar indicadores anteriores */
-      container.querySelectorAll('.drag-over-top,.drag-over-bot')
-        .forEach(c => c.classList.remove('drag-over-top','drag-over-bot'));
-      if (!target) return;
-      const rect = target.getBoundingClientRect();
-      if (ev.clientY < rect.top + rect.height / 2) {
-        container.insertBefore(card, target);
-      } else {
-        container.insertBefore(card, target.nextSibling);
+      const dx = ev.clientX - startX;
+      const dy = ev.clientY - startY;
+
+      /* ── Umbral: comenzar drag solo si el dedo/cursor se movió lo suficiente ── */
+      if (!dragging) {
+        if (Math.abs(dx) < THRESHOLD && Math.abs(dy) < THRESHOLD) return;
+        dragging = true;
+        handle.setPointerCapture(e.pointerId);
+        card.classList.add('dragging');
       }
+
+      ev.preventDefault();
+      const container = card.parentNode;
+
+      /* Detectar card destino por geometría (sin ocultar nada) */
+      const siblings = [...container.querySelectorAll('.card[data-launch-id]')]
+        .filter(c => c !== card);
+      let target = null;
+      for (const c of siblings) {
+        const r = c.getBoundingClientRect();
+        if (ev.clientY >= r.top && ev.clientY <= r.bottom) { target = c; break; }
+      }
+      if (!target) {
+        /* por encima del primero o por debajo del último */
+        const first = siblings[0], last = siblings[siblings.length - 1];
+        if (first && ev.clientY < first.getBoundingClientRect().top)
+          container.insertBefore(card, first);
+        else if (last && ev.clientY > last.getBoundingClientRect().bottom)
+          container.appendChild(card);
+        return;
+      }
+      const r = target.getBoundingClientRect();
+      container.insertBefore(card, ev.clientY < r.top + r.height / 2
+        ? target
+        : target.nextSibling);
     };
 
     const onUp = async () => {
-      handle.removeEventListener('pointermove', onMove);
-      handle.removeEventListener('pointerup', onUp);
-      handle.removeEventListener('pointercancel', onUp);
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup',   onUp);
+      document.removeEventListener('pointercancel', onUp);
+      if (!dragging) return;   /* fue solo un clic — no guardar nada */
       card.classList.remove('dragging');
-      if (!didDrag) return;
 
-      /* calcular nuevo orden de los hitos sin fecha del mismo año */
-      const allCards = [...container.querySelectorAll('.card[data-launch-id]')];
-      const undated  = allCards.filter(c => {
-        const l = launches.find(x => x.id === +c.dataset.launchId);
-        return l && l.year_id === yearId && !l.launch_date;
-      });
+      const container = card.parentNode;
+      const undated = [...container.querySelectorAll('.card[data-launch-id]')]
+        .filter(c => {
+          const l = launches.find(x => x.id === +c.dataset.launchId);
+          return l && l.year_id === yearId && !l.launch_date;
+        });
       await Promise.all(
         undated.map((c, idx) =>
-          api.patch('timeline_launches', +c.dataset.launchId, { position: idx })
-        )
+          api.patch('timeline_launches', +c.dataset.launchId, { position: idx }))
       );
-      /* actualizar estado local sin re-renderizar */
       undated.forEach((c, idx) => {
         const l = launches.find(x => x.id === +c.dataset.launchId);
         if (l) l.position = idx;
@@ -615,9 +629,9 @@ function setupCardDrag(card, launchId, yearId) {
       toast('Orden actualizado ✓');
     };
 
-    handle.addEventListener('pointermove', onMove);
-    handle.addEventListener('pointerup',   onUp);
-    handle.addEventListener('pointercancel', onUp);
+    document.addEventListener('pointermove',   onMove);
+    document.addEventListener('pointerup',     onUp);
+    document.addEventListener('pointercancel', onUp);
   });
 }
 
