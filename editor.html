@@ -1090,6 +1090,7 @@ function cfgToLocalStorage(c) {
   ls.setItem('tl_tag_urg_name', c.tag_urg_name || CFG_DEFAULTS.tag_urg_name);
   ls.setItem('tl_tag_urg_desc', c.tag_urg_desc || CFG_DEFAULTS.tag_urg_desc);
   ls.setItem('tl_col_urg',      c.tag_urg_color|| CFG_DEFAULTS.tag_urg_color);
+  if (c.font_scale != null) ls.setItem('tl_fscale', c.font_scale);
 }
 
 /* Carga config desde Supabase y puebla el formulario */

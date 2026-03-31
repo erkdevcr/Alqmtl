@@ -29,6 +29,7 @@ if(localStorage.getItem('alq-theme')==='dark'){document.documentElement.classLis
   --g40:  #999999;  --g60:  #666666;  --g90:  #1a1a1a;
   --font: 'Space Grotesk','Helvetica Neue',Arial,sans-serif;
   --seg-w: clamp(64px, 10vw, 200px);   /* collapsed segment width — fluid */
+  --tl-fscale: 1;                       /* escala de texto del timeline */
   --cd:    clamp(44px, 6.77vw, 150px); /* year circle diameter    — fluid */
 }
 html.dark {
@@ -189,7 +190,7 @@ html.dark #loading {
 .view.active   { display:flex; }
 
 /* ── SHARED: Tags ── */
-.tag { display:inline-block; font-size:clamp(6px,.7vw,16px); font-weight:700; padding:1px 4px; margin-left:3px; letter-spacing:.1em; text-transform:uppercase; vertical-align:middle; white-space:nowrap; }
+.tag { display:inline-block; font-size:calc(clamp(6px,.7vw,16px) * var(--tl-fscale)); font-weight:700; padding:1px 4px; margin-left:3px; letter-spacing:.1em; text-transform:uppercase; vertical-align:middle; white-space:nowrap; }
 .tag-new { background:var(--fg); color:var(--bg); }
 .tag-upd { background:var(--g20); color:var(--g90); }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.35} }
@@ -198,7 +199,7 @@ html.dark #loading {
 /* ── SHARED: Market pill ── */
 .market-pill {
   display:inline-block; border:1.5px solid var(--fg);
-  padding:2px 9px; font-size:clamp(7px,.82vw,18px); font-weight:700;
+  padding:2px 9px; font-size:calc(clamp(7px,.82vw,18px) * var(--tl-fscale)); font-weight:700;
   letter-spacing:.2em; text-transform:uppercase; color:var(--fg);
   white-space:normal; text-align:center; line-height:1.5;
 }
@@ -310,11 +311,11 @@ html.dark #loading {
 .row-below .hito { top:0;    justify-content:flex-start; }
 
 .hlabel { font-size:clamp(9px,1.11vw,24px); font-weight:500; color:var(--fg); line-height:1.4; text-align:center; white-space:nowrap; }
-.hline-tag  { font-size:clamp(6px,.7vw,16px); font-weight:700; display:flex; justify-content:center; white-space:nowrap; }
-.hline-name { font-size:clamp(9px,1.11vw,24px); font-weight:600; color:var(--fg); line-height:1.3; white-space:nowrap; }
-.hline-det  { font-size:clamp(7px,.93vw,20px); font-weight:400; color:var(--g60); line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.hline-date { font-size:clamp(7px,.875vw,20px); color:var(--g40); white-space:nowrap; }
-.hline-items{ font-size:clamp(7px,.875vw,20px); color:var(--g40); white-space:nowrap; }
+.hline-tag  { font-size:calc(clamp(6px,.7vw,16px)   * var(--tl-fscale)); font-weight:700; display:flex; justify-content:center; white-space:nowrap; }
+.hline-name { font-size:calc(clamp(9px,1.11vw,24px) * var(--tl-fscale)); font-weight:600; color:var(--fg); line-height:1.3; white-space:nowrap; }
+.hline-det  { font-size:calc(clamp(7px,.93vw,20px)  * var(--tl-fscale)); font-weight:400; color:var(--g60); line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hline-date { font-size:calc(clamp(7px,.875vw,20px) * var(--tl-fscale)); color:var(--g40); white-space:nowrap; }
+.hline-items{ font-size:calc(clamp(7px,.875vw,20px) * var(--tl-fscale)); color:var(--g40); white-space:nowrap; }
 .hsub  { font-size:clamp(7px,.875vw,20px); color:var(--g40); text-align:center; margin-top:2px; white-space:nowrap; }
 
 .stem  { width:1px; background:var(--fg); height:clamp(46px,5.6vw,120px); position:relative; flex-shrink:0; }
@@ -407,9 +408,9 @@ html.dark #loading {
   transition:border-color .2s, box-shadow .2s;
 }
 .fc-card:hover { border-color:var(--g60); box-shadow:0 2px 10px rgba(0,0,0,.07); }
-.fc-card-name   { font-size:clamp(10px,1.28vw,28px); font-weight:600; color:var(--fg); line-height:1.35; margin-bottom:3px; }
-.fc-card-detail { font-size:clamp(9px,1.05vw,23px); color:var(--g60); font-weight:400; line-height:1.4; margin-bottom:4px; }
-.fc-card-sub    { font-size:clamp(7px,.93vw,20px); color:var(--g40); font-weight:500; }
+.fc-card-name   { font-size:calc(clamp(10px,1.28vw,28px) * var(--tl-fscale)); font-weight:600; color:var(--fg); line-height:1.35; margin-bottom:3px; }
+.fc-card-detail { font-size:calc(clamp(9px,1.05vw,23px)  * var(--tl-fscale)); color:var(--g60); font-weight:400; line-height:1.4; margin-bottom:4px; }
+.fc-card-sub    { font-size:calc(clamp(7px,.93vw,20px)   * var(--tl-fscale)); color:var(--g40); font-weight:500; }
 
 /* ══════════════════════════════════════════
    FOOTER
@@ -477,6 +478,8 @@ html.dark #loading {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
         </button>
         <div class="ctrl-panel" id="ctrlPanel">
+          <button class="btn-icon" id="fontMinus" title="Texto más pequeño" style="font-size:11px;font-weight:700;letter-spacing:-.04em;">A−</button>
+          <button class="btn-icon" id="fontPlus"  title="Texto más grande"  style="font-size:13px;font-weight:700;letter-spacing:-.04em;">A+</button>
           <button class="btn-icon" id="fsToggle" title="Pantalla completa">
             <svg id="iExpand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
             <svg id="iCompress" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="10" y1="14" x2="3" y2="21"/><line x1="21" y1="3" x2="14" y2="10"/></svg>
@@ -558,6 +561,7 @@ html.dark #loading {
     tag_urg_name:  ls.getItem('tl_tag_urg_name'),
     tag_urg_desc:  ls.getItem('tl_tag_urg_desc'),
     tag_urg_color: ls.getItem('tl_col_urg'),
+    font_scale:    ls.getItem('tl_fscale'),
   });
 })();
 </script>
@@ -591,11 +595,15 @@ const SUPA_URL = 'https://utkqzxsnyvblqndtkntx.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV0a3F6eHNueXZibHFuZHRrbnR4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5MTU5MjEsImV4cCI6MjA5MDQ5MTkyMX0.bxOZDHRtsYBkplffNzoxc2-OQMvG8qXdX_bXxg_CYlA';
 
 const supa = (path) => fetch(`${SUPA_URL}/rest/v1/${path}`, {
-  headers: {
-    'apikey': SUPA_KEY,
-    'Authorization': `Bearer ${SUPA_KEY}`,
-    'Content-Type': 'application/json'
-  }
+  headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}`, 'Content-Type': 'application/json' }
+}).then(r => r.json());
+
+const supaUpsert = (table, body) => fetch(`${SUPA_URL}/rest/v1/${table}`, {
+  method: 'POST',
+  headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}`,
+             'Content-Type': 'application/json',
+             'Prefer': 'resolution=merge-duplicates,return=representation' },
+  body: JSON.stringify(body)
 }).then(r => r.json());
 
 /* ── helpers ── */
@@ -604,6 +612,11 @@ const TM  = {
   upd: localStorage.getItem('tl_tag_upd_name') || 'UPD',
   urg: localStorage.getItem('tl_tag_urg_name') || 'URG'
 };
+
+/* Escala de fuente — estado persistido */
+let _fontScale = parseFloat(localStorage.getItem('tl_fscale') || '1');
+/* Aplicar escala de cache antes de que llegue Supabase */
+document.documentElement.style.setProperty('--tl-fscale', _fontScale);
 
 /* Aplica config al DOM y actualiza caché localStorage */
 function applyConfig(c) {
@@ -662,6 +675,14 @@ function applyConfig(c) {
       (cn ? `.tag-new{background:${cn} !important;color:#fff !important}` : '') +
       (cu ? `.tag-upd{background:${cu} !important;border:none !important;color:#fff !important}` : '') +
       (cg ? `.tag-urg{background:${cg} !important}` : '');
+  }
+
+  /* Escala de texto del timeline */
+  if (c.font_scale != null) {
+    const s = parseFloat(c.font_scale) || 1;
+    document.documentElement.style.setProperty('--tl-fscale', s);
+    ls.setItem('tl_fscale', s);
+    _fontScale = s;
   }
 }
 
@@ -1183,6 +1204,17 @@ function renderAll(YEARS) {
   tlChannel.addEventListener('message', e => {
     if (e.data?.type === 'data_changed') tlReload();
   });
+
+  /* ── A− / A+ font scale ── */
+  const SCALE_STEP = 0.1, SCALE_MIN = 0.7, SCALE_MAX = 1.5;
+  function setScale(s) {
+    _fontScale = Math.round(Math.min(SCALE_MAX, Math.max(SCALE_MIN, s)) * 10) / 10;
+    document.documentElement.style.setProperty('--tl-fscale', _fontScale);
+    localStorage.setItem('tl_fscale', _fontScale);
+    supaUpsert('timeline_config', { id: 1, font_scale: _fontScale });
+  }
+  document.getElementById('fontMinus')?.addEventListener('click', () => setScale(_fontScale - SCALE_STEP));
+  document.getElementById('fontPlus')?.addEventListener('click',  () => setScale(_fontScale + SCALE_STEP));
 })();
 </script>
 </body>
