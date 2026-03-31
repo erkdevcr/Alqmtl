@@ -1244,7 +1244,7 @@ function renderAll(YEARS) {
   const popup  = document.getElementById('hito-popup');
   let   _activeHito = null;
 
-  function showHitoPopup(hito) {
+  function showHitoPopup(hito, clickY) {
     const d = _hitoData[parseInt(hito.dataset.hi, 10)];
     if (!d) return;
 
@@ -1262,7 +1262,8 @@ function renderAll(YEARS) {
       (d.d ? `<div class="hp-det">${d.d}</div>` : '') +
       (subParts.length ? `<div class="hp-sub">${subParts.join(' · ')}</div>` : '');
 
-    /* Posicionar: bottom del popup anclado 10px sobre el top del hito */
+    /* Anclar la base del popup 10px sobre el punto de toque — funciona
+       tanto para hitos arriba como abajo del timeline */
     popup.style.display = 'block';
     popup.classList.remove('hp-vis');
     const rect = hito.getBoundingClientRect();
@@ -1270,7 +1271,7 @@ function renderAll(YEARS) {
     let left   = rect.left + rect.width / 2 - pw / 2;
     left = Math.max(8, Math.min(left, window.innerWidth - pw - 8));
     popup.style.left   = left + 'px';
-    popup.style.bottom = (window.innerHeight - rect.top + 10) + 'px';
+    popup.style.bottom = (window.innerHeight - clickY + 10) + 'px';
     popup.style.top    = 'auto';
     /* Forzar reflow para que la transición se dispare */
     popup.offsetHeight;
@@ -1290,7 +1291,7 @@ function renderAll(YEARS) {
     if (hito) {
       e.stopPropagation();
       if (hito === _activeHito) { hideHitoPopup(); return; }
-      showHitoPopup(hito);
+      showHitoPopup(hito, e.clientY);
       return;
     }
     if (_activeHito) hideHitoPopup();
