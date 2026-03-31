@@ -674,11 +674,11 @@ function buildTag(row) {
 }
 
 /* Formatea fecha de DB (YYYY-MM-DD) a texto corto: "Sep 2026", "Ene 2027" */
-const MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 function fmtDate(dateStr) {
   if (!dateStr) return null;
   const [y, m] = dateStr.split('-');
-  return `${MESES[parseInt(m,10)-1]} ${y}`;
+  return `${MESES[parseInt(m,10)-1]}`;
 }
 
 /* Construye el sub-label del hito: items + fecha si existen */
