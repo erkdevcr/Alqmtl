@@ -339,14 +339,15 @@ html.dark #loading {
 .fc-pane::-webkit-scrollbar { width:4px; }
 .fc-pane::-webkit-scrollbar-thumb { background:var(--g20); border-radius:2px; }
 
-.fc-ph  { display:flex; align-items:center; gap:20px; flex-shrink:0; }
+.fc-ph  { display:flex; flex-direction:column; align-items:flex-start; gap:10px; flex-shrink:0; }
+.fc-nav { display:flex; gap:7px; }
+.fc-year-row { display:flex; align-items:center; gap:20px; }
 .fc-yrl { font-size:clamp(28px,3.97vw,80px); font-weight:700; color:var(--fg); letter-spacing:-.04em; line-height:1; }
 .fc-sts { display:flex; gap:18px; align-items:center; }
 .fc-st  { display:flex; flex-direction:column; gap:2px; }
 .fc-st .sv { font-size:clamp(16px,1.98vw,42px); font-weight:700; color:var(--fg); letter-spacing:-.03em; line-height:1; }
 .fc-st .sl { font-size:clamp(7px,.875vw,20px); font-weight:500; color:var(--g60); letter-spacing:.2em; text-transform:uppercase; }
 .fc-sdv { width:1px; height:30px; background:var(--g20); }
-.fc-nav { margin-left:auto; display:flex; gap:7px; }
 .fc-nav button {
   width:32px; height:32px; border:1.5px solid var(--g20); background:none;
   cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--fg);
@@ -676,17 +677,21 @@ function renderAll(YEARS) {
 
   /* ── FICHAS ── */
   YEARS.forEach((y, i) => {
-    /* grupo null/undefined → por defecto Nuevos Lanzamientos */
-    const nL = y.ll.filter(l => l.g !== 'w');
-    const wL = y.ll.filter(l => l.g === 'w');
+    /* Todos los hitos en una sola sección, ordenados por mes */
+    const allLL = [...y.ll].sort((a, b) => {
+      if (a.launch_date && b.launch_date) return a.launch_date.localeCompare(b.launch_date);
+      if (a.launch_date) return -1;
+      if (b.launch_date) return 1;
+      return (a.position - b.position) || 0;
+    });
 
     const node = document.createElement('div');
     node.className = 'fc-node' + (i===0?' active':'');
     node.dataset.i = i;
     node.innerHTML = `
-      <div class="fc-ticks-a">${nL.slice(0,8).map((_,j)=>`<div class="fc-tick" style="height:${THA[j]}px"></div>`).join('')}</div>
+      <div class="fc-ticks-a">${allLL.slice(0,8).map((_,j)=>`<div class="fc-tick" style="height:${THA[j]}px"></div>`).join('')}</div>
       <div class="fc-circ${y.cur?' current':''}">${y.year}</div>
-      <div class="fc-ticks-b">${wL.slice(0,8).map((_,j)=>`<div class="fc-tick" style="height:${THB[j]}px"></div>`).join('')}</div>`;
+      <div class="fc-ticks-b"></div>`;
     node.addEventListener('click', () => fActivate(i));
     fcYears.appendChild(node);
 
@@ -708,12 +713,6 @@ function renderAll(YEARS) {
 
     pane.innerHTML = `
       <div class="fc-ph">
-        <div class="fc-yrl">${y.year}</div>
-        <div class="fc-sts">
-          ${y.items?`<div class="fc-st"><div class="sv">${y.items}</div><div class="sl">Items${y.calc?' — '+y.calc:''}</div></div>`:''}
-          ${y.rev  ?`<div class="fc-sdv"></div><div class="fc-st"><div class="sv">${y.rev}</div><div class="sl">Revenue Est.</div></div>`:''}
-          ${y.mkt  ?`<div class="fc-sdv"></div><div class="market-pill">${mktHtml(y.mkt)}</div>`:''}
-        </div>
         <div class="fc-nav">
           <button onclick="fActivate(${i-1})" ${i===0?'disabled':''}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
@@ -722,9 +721,16 @@ function renderAll(YEARS) {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
           </button>
         </div>
+        <div class="fc-year-row">
+          <div class="fc-yrl">${y.year}</div>
+          <div class="fc-sts">
+            ${y.items?`<div class="fc-st"><div class="sv">${y.items}</div><div class="sl">Items${y.calc?' — '+y.calc:''}</div></div>`:''}
+            ${y.rev  ?`<div class="fc-sdv"></div><div class="fc-st"><div class="sv">${y.rev}</div><div class="sl">Revenue Est.</div></div>`:''}
+            ${y.mkt  ?`<div class="fc-sdv"></div><div class="market-pill">${mktHtml(y.mkt)}</div>`:''}
+          </div>
+        </div>
       </div>
-      ${nL.length?`<div><div class="fc-sec-lbl">Nuevos Lanzamientos</div><div class="fc-cards">${cardRow(nL)}</div></div>`:''}
-      ${wL.length?`<div><div class="fc-sec-lbl">Actualizaciones de Línea</div><div class="fc-cards">${cardRow(wL)}</div></div>`:''}`;
+      ${allLL.length?`<div><div class="fc-sec-lbl">Detalle de lanzamientos</div><div class="fc-cards">${cardRow(allLL)}</div></div>`:''}`;
     fcPanes.appendChild(pane);
   });
 
