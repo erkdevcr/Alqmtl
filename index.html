@@ -192,7 +192,7 @@ html.dark #loading {
 .tag-new { background:var(--fg); color:var(--bg); }
 .tag-upd { background:var(--g20); color:var(--g90); }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.35} }
-.tag-urg { background:#cc2200; color:#fff; animation:blink 1.8s ease-in-out infinite; }
+.tag-urg { background:#cc2200; color:#fff; transition:opacity .7s ease-in-out; }
 
 /* ── SHARED: Market pill ── */
 .market-pill {
@@ -425,9 +425,8 @@ html.dark #loading {
 @media (prefers-reduced-motion:reduce) {
   .circle-inner.current, .fc-circ.current { animation:none; }
 }
-/* tag URG y bolita del footer siempre parpadean, ignorando prefers-reduced-motion */
-.tag-urg { animation:blink 1.8s ease-in-out infinite !important; }
-.lsw[id="tl-lsw-urg"] { animation:blink 1.8s ease-in-out infinite !important; }
+/* blink URG manejado por JS — ver urgBlink() */
+#tl-lsw-urg { transition:opacity .7s ease-in-out; }
 
 @media (max-width: 640px) {
   .header { padding:10px 16px; gap:8px; }
@@ -1133,6 +1132,19 @@ function renderAll(YEARS) {
    BOOT
 ══════════════════════════════════════════ */
 (async () => {
+  /* ── URG blink en JS — funciona en iOS Low Power Mode y prefers-reduced-motion ── */
+  (function urgBlink() {
+    let on = true;
+    function tick() {
+      on = !on;
+      const op = on ? '1' : '0.3';
+      document.querySelectorAll('.tag-urg').forEach(el => el.style.opacity = op);
+      const lsw = document.getElementById('tl-lsw-urg');
+      if (lsw) lsw.style.opacity = op;
+    }
+    setInterval(tick, 900); // 900ms × 2 = 1.8s ciclo completo
+  })();
+
   try {
     const YEARS = await loadData();
     renderAll(YEARS);
