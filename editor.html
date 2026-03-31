@@ -458,7 +458,13 @@ const api = {
   delete: (table, id) =>
     fetch(`${SUPA_URL}/rest/v1/${table}?id=eq.${id}`, {
       method:'DELETE', headers: HEADERS
-    })
+    }),
+  upsert: (table, body) =>
+    fetch(`${SUPA_URL}/rest/v1/${table}`, {
+      method:'POST',
+      headers: { ...HEADERS, 'Prefer': 'resolution=merge-duplicates,return=representation' },
+      body: JSON.stringify(body)
+    }).then(r => r.json())
 };
 
 /* ══════════════════════════════════════════
@@ -1040,38 +1046,97 @@ document.getElementById('search-launch').addEventListener('input', () => {
 /* ══════════════════════════════════════════
    CONFIGURACIÓN — título
 ══════════════════════════════════════════ */
-(function initConfig() {
-  const ls = localStorage;
-  document.getElementById('cfg-title1').value        = ls.getItem('tl_title1')        || 'Línea del Tiempo';
-  document.getElementById('cfg-title2').value        = ls.getItem('tl_title2')        || 'Quinquenio Joyas';
-  document.getElementById('cfg-badge').value         = ls.getItem('tl_badge')         || 'Actualizada Mar 2026 · Fuente: Board Lanzamientos KL';
-  /* tags: nombre + descripción + color */
-  document.getElementById('cfg-tag-new-name').value  = ls.getItem('tl_tag_new_name')  || 'NEW';
-  document.getElementById('cfg-tag-new-desc').value  = ls.getItem('tl_tag_new_desc')  || 'Nuevo vs. plan original';
-  document.getElementById('cfg-tag-upd-name').value  = ls.getItem('tl_tag_upd_name')  || 'UPD';
-  document.getElementById('cfg-tag-upd-desc').value  = ls.getItem('tl_tag_upd_desc')  || 'Detalle actualizado';
-  document.getElementById('cfg-tag-urg-name').value  = ls.getItem('tl_tag_urg_name')  || 'URG';
-  document.getElementById('cfg-tag-urg-desc').value  = ls.getItem('tl_tag_urg_desc')  || 'Urgente en board';
-  document.getElementById('cfg-col-new').value       = ls.getItem('tl_col_new')       || '#111111';
-  document.getElementById('cfg-col-upd').value       = ls.getItem('tl_col_upd')       || '#888888';
-  document.getElementById('cfg-col-urg').value       = ls.getItem('tl_col_urg')       || '#cc2200';
-})();
+/* Defaults para no repetirlos */
+const CFG_DEFAULTS = {
+  title1:       'Línea del Tiempo',
+  title2:       'Quinquenio Joyas',
+  badge:        'Actualizada Mar 2026 · Fuente: Board Lanzamientos KL',
+  tag_new_name: 'NEW',  tag_new_desc: 'Nuevo vs. plan original',  tag_new_color: '#111111',
+  tag_upd_name: 'UPD',  tag_upd_desc: 'Detalle actualizado',      tag_upd_color: '#888888',
+  tag_urg_name: 'URG',  tag_urg_desc: 'Urgente en board',         tag_urg_color: '#cc2200'
+};
 
-document.getElementById('btn-save-config').addEventListener('click', () => {
+function cfgToForm(c) {
+  const s = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+  s('cfg-title1',        c.title1       || CFG_DEFAULTS.title1);
+  s('cfg-title2',        c.title2       || CFG_DEFAULTS.title2);
+  s('cfg-badge',         c.badge        || CFG_DEFAULTS.badge);
+  s('cfg-tag-new-name',  c.tag_new_name || CFG_DEFAULTS.tag_new_name);
+  s('cfg-tag-new-desc',  c.tag_new_desc || CFG_DEFAULTS.tag_new_desc);
+  s('cfg-tag-upd-name',  c.tag_upd_name || CFG_DEFAULTS.tag_upd_name);
+  s('cfg-tag-upd-desc',  c.tag_upd_desc || CFG_DEFAULTS.tag_upd_desc);
+  s('cfg-tag-urg-name',  c.tag_urg_name || CFG_DEFAULTS.tag_urg_name);
+  s('cfg-tag-urg-desc',  c.tag_urg_desc || CFG_DEFAULTS.tag_urg_desc);
+  s('cfg-col-new',       c.tag_new_color || CFG_DEFAULTS.tag_new_color);
+  s('cfg-col-upd',       c.tag_upd_color || CFG_DEFAULTS.tag_upd_color);
+  s('cfg-col-urg',       c.tag_urg_color || CFG_DEFAULTS.tag_urg_color);
+}
+
+function cfgToLocalStorage(c) {
   const ls = localStorage;
-  ls.setItem('tl_title1',       document.getElementById('cfg-title1').value.trim()       || 'Línea del Tiempo');
-  ls.setItem('tl_title2',       document.getElementById('cfg-title2').value.trim()       || 'Quinquenio Joyas');
-  ls.setItem('tl_badge',        document.getElementById('cfg-badge').value.trim()        || 'Actualizada Mar 2026 · Fuente: Board Lanzamientos KL');
-  ls.setItem('tl_tag_new_name', document.getElementById('cfg-tag-new-name').value.trim() || 'NEW');
-  ls.setItem('tl_tag_new_desc', document.getElementById('cfg-tag-new-desc').value.trim() || 'Nuevo vs. plan original');
-  ls.setItem('tl_tag_upd_name', document.getElementById('cfg-tag-upd-name').value.trim() || 'UPD');
-  ls.setItem('tl_tag_upd_desc', document.getElementById('cfg-tag-upd-desc').value.trim() || 'Detalle actualizado');
-  ls.setItem('tl_tag_urg_name', document.getElementById('cfg-tag-urg-name').value.trim() || 'URG');
-  ls.setItem('tl_tag_urg_desc', document.getElementById('cfg-tag-urg-desc').value.trim() || 'Urgente en board');
-  ls.setItem('tl_col_new',      document.getElementById('cfg-col-new').value);
-  ls.setItem('tl_col_upd',      document.getElementById('cfg-col-upd').value);
-  ls.setItem('tl_col_urg',      document.getElementById('cfg-col-urg').value);
-  toast('Configuración guardada ✓');
+  ls.setItem('tl_title1',       c.title1       || CFG_DEFAULTS.title1);
+  ls.setItem('tl_title2',       c.title2       || CFG_DEFAULTS.title2);
+  ls.setItem('tl_badge',        c.badge        || CFG_DEFAULTS.badge);
+  ls.setItem('tl_tag_new_name', c.tag_new_name || CFG_DEFAULTS.tag_new_name);
+  ls.setItem('tl_tag_new_desc', c.tag_new_desc || CFG_DEFAULTS.tag_new_desc);
+  ls.setItem('tl_col_new',      c.tag_new_color|| CFG_DEFAULTS.tag_new_color);
+  ls.setItem('tl_tag_upd_name', c.tag_upd_name || CFG_DEFAULTS.tag_upd_name);
+  ls.setItem('tl_tag_upd_desc', c.tag_upd_desc || CFG_DEFAULTS.tag_upd_desc);
+  ls.setItem('tl_col_upd',      c.tag_upd_color|| CFG_DEFAULTS.tag_upd_color);
+  ls.setItem('tl_tag_urg_name', c.tag_urg_name || CFG_DEFAULTS.tag_urg_name);
+  ls.setItem('tl_tag_urg_desc', c.tag_urg_desc || CFG_DEFAULTS.tag_urg_desc);
+  ls.setItem('tl_col_urg',      c.tag_urg_color|| CFG_DEFAULTS.tag_urg_color);
+}
+
+/* Carga config desde Supabase y puebla el formulario */
+async function initConfig() {
+  /* Mientras carga desde DB, usar caché localStorage */
+  cfgToForm({
+    title1:       localStorage.getItem('tl_title1'),
+    title2:       localStorage.getItem('tl_title2'),
+    badge:        localStorage.getItem('tl_badge'),
+    tag_new_name: localStorage.getItem('tl_tag_new_name'),
+    tag_new_desc: localStorage.getItem('tl_tag_new_desc'),
+    tag_new_color:localStorage.getItem('tl_col_new'),
+    tag_upd_name: localStorage.getItem('tl_tag_upd_name'),
+    tag_upd_desc: localStorage.getItem('tl_tag_upd_desc'),
+    tag_upd_color:localStorage.getItem('tl_col_upd'),
+    tag_urg_name: localStorage.getItem('tl_tag_urg_name'),
+    tag_urg_desc: localStorage.getItem('tl_tag_urg_desc'),
+    tag_urg_color:localStorage.getItem('tl_col_urg'),
+  });
+  try {
+    const rows = await api.get('timeline_config', 'select=*&id=eq.1');
+    if (rows && rows[0]) { cfgToForm(rows[0]); cfgToLocalStorage(rows[0]); }
+  } catch(e) { console.warn('No se pudo cargar config desde DB:', e); }
+}
+initConfig();
+
+document.getElementById('btn-save-config').addEventListener('click', async () => {
+  const g = id => document.getElementById(id)?.value.trim();
+  const cfg = {
+    id:            1,
+    title1:        g('cfg-title1')       || CFG_DEFAULTS.title1,
+    title2:        g('cfg-title2')       || CFG_DEFAULTS.title2,
+    badge:         g('cfg-badge')        || CFG_DEFAULTS.badge,
+    tag_new_name:  g('cfg-tag-new-name') || CFG_DEFAULTS.tag_new_name,
+    tag_new_desc:  g('cfg-tag-new-desc') || CFG_DEFAULTS.tag_new_desc,
+    tag_new_color: document.getElementById('cfg-col-new')?.value || CFG_DEFAULTS.tag_new_color,
+    tag_upd_name:  g('cfg-tag-upd-name') || CFG_DEFAULTS.tag_upd_name,
+    tag_upd_desc:  g('cfg-tag-upd-desc') || CFG_DEFAULTS.tag_upd_desc,
+    tag_upd_color: document.getElementById('cfg-col-upd')?.value || CFG_DEFAULTS.tag_upd_color,
+    tag_urg_name:  g('cfg-tag-urg-name') || CFG_DEFAULTS.tag_urg_name,
+    tag_urg_desc:  g('cfg-tag-urg-desc') || CFG_DEFAULTS.tag_urg_desc,
+    tag_urg_color: document.getElementById('cfg-col-urg')?.value || CFG_DEFAULTS.tag_urg_color,
+  };
+  try {
+    await api.upsert('timeline_config', cfg);
+    cfgToLocalStorage(cfg);   /* actualizar caché */
+    toast('Configuración guardada ✓');
+  } catch(e) {
+    toast('Error al guardar configuración');
+    console.error(e);
+  }
 });
 
 /* ══════════════════════════════════════════

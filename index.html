@@ -14,7 +14,7 @@ if(localStorage.getItem('alq-theme')==='dark'){document.documentElement.classLis
     var css=(cn?'.tag-new{background:'+cn+' !important;color:#fff !important}':'')+
             (cu?'.tag-upd{background:'+cu+' !important;border:none !important;color:#fff !important}':'')+
             (cg?'.tag-urg{background:'+cg+' !important}':'');
-    var s=document.createElement('style'); s.textContent=css; document.head.appendChild(s);
+    var s=document.createElement('style'); s.id='cfg-tag-colors'; s.textContent=css; document.head.appendChild(s);
   }
 })();
 </script>
@@ -539,24 +539,23 @@ html.dark #loading {
 </footer>
 
 <script>
+/* Aplicar caché localStorage inmediatamente (sin flash) antes de que llegue Supabase */
 (function(){
   var ls = localStorage;
-  /* badge */
-  var badge = ls.getItem('tl_badge');
-  if(badge) document.getElementById('tl-badge').textContent = badge;
-  /* footer legend: nombre corto + descripción */
-  function legText(key){ return ls.getItem('tl_tag_'+key+'_name')||{new:'NEW',upd:'UPD',urg:'URG'}[key]; }
-  function legDesc(key){ return ls.getItem('tl_tag_'+key+'_desc'); }
-  ['new','upd','urg'].forEach(function(k){
-    var name=legText(k), desc=legDesc(k);
-    var el=document.getElementById('tl-leg-'+k);
-    if(el) el.textContent = desc ? name+' — '+desc : name;
+  applyConfig({
+    title1:        ls.getItem('tl_title1'),
+    title2:        ls.getItem('tl_title2'),
+    badge:         ls.getItem('tl_badge'),
+    tag_new_name:  ls.getItem('tl_tag_new_name'),
+    tag_new_desc:  ls.getItem('tl_tag_new_desc'),
+    tag_new_color: ls.getItem('tl_col_new'),
+    tag_upd_name:  ls.getItem('tl_tag_upd_name'),
+    tag_upd_desc:  ls.getItem('tl_tag_upd_desc'),
+    tag_upd_color: ls.getItem('tl_col_upd'),
+    tag_urg_name:  ls.getItem('tl_tag_urg_name'),
+    tag_urg_desc:  ls.getItem('tl_tag_urg_desc'),
+    tag_urg_color: ls.getItem('tl_col_urg'),
   });
-  /* colores bolitas del footer */
-  var colNew=ls.getItem('tl_col_new'), colUpd=ls.getItem('tl_col_upd'), colUrg=ls.getItem('tl_col_urg');
-  if(colNew) document.getElementById('tl-lsw-new').style.background = colNew;
-  if(colUpd){ var u=document.getElementById('tl-lsw-upd'); u.style.background=colUpd; u.style.border='none'; }
-  if(colUrg) document.getElementById('tl-lsw-urg').style.background = colUrg;
 })();
 </script>
 
@@ -603,6 +602,66 @@ const TM  = {
   urg: localStorage.getItem('tl_tag_urg_name') || 'URG'
 };
 
+/* Aplica config al DOM y actualiza caché localStorage */
+function applyConfig(c) {
+  if (!c) return;
+  const ls = localStorage;
+
+  /* Título */
+  if (c.title1) {
+    const h = document.getElementById('tl-main-title');
+    if (h) h.childNodes[0].textContent = c.title1;
+    ls.setItem('tl_title1', c.title1);
+  }
+  if (c.title2) {
+    const sp = document.getElementById('tl-sub-title');
+    if (sp) sp.textContent = c.title2;
+    ls.setItem('tl_title2', c.title2);
+  }
+
+  /* Badge */
+  if (c.badge) {
+    const b = document.getElementById('tl-badge');
+    if (b) b.textContent = c.badge;
+    ls.setItem('tl_badge', c.badge);
+  }
+
+  /* Tags: nombre en TM + leyenda del footer */
+  [['new', c.tag_new_name, c.tag_new_desc, c.tag_new_color],
+   ['upd', c.tag_upd_name, c.tag_upd_desc, c.tag_upd_color],
+   ['urg', c.tag_urg_name, c.tag_urg_desc, c.tag_urg_color]
+  ].forEach(([k, name, desc, color]) => {
+    if (name) { TM[k] = name; ls.setItem('tl_tag_'+k+'_name', name); }
+    if (desc)  ls.setItem('tl_tag_'+k+'_desc', desc);
+    /* leyenda footer */
+    const legEl = document.getElementById('tl-leg-'+k);
+    if (legEl) {
+      const n = name || TM[k];
+      const d = desc || ls.getItem('tl_tag_'+k+'_desc');
+      legEl.textContent = d ? n+' — '+d : n;
+    }
+    /* color bolita footer */
+    if (color) {
+      const lsw = document.getElementById('tl-lsw-'+k);
+      if (lsw) { lsw.style.background = color; if (k==='upd') lsw.style.border='none'; }
+      ls.setItem('tl_col_'+k, color);
+    }
+  });
+
+  /* Colores de los tags en los hitos — inyectar/actualizar <style> */
+  const cn = c.tag_new_color || ls.getItem('tl_col_new');
+  const cu = c.tag_upd_color || ls.getItem('tl_col_upd');
+  const cg = c.tag_urg_color || ls.getItem('tl_col_urg');
+  if (cn || cu || cg) {
+    let st = document.getElementById('cfg-tag-colors');
+    if (!st) { st = document.createElement('style'); st.id='cfg-tag-colors'; document.head.appendChild(st); }
+    st.textContent =
+      (cn ? `.tag-new{background:${cn} !important;color:#fff !important}` : '') +
+      (cu ? `.tag-upd{background:${cu} !important;border:none !important;color:#fff !important}` : '') +
+      (cg ? `.tag-urg{background:${cg} !important}` : '');
+  }
+}
+
 
 /* Construye el tag combinando status_tag + is_urgent */
 function buildTag(row) {
@@ -647,11 +706,15 @@ function genTicks(n, seed) {
    FETCH Y BUILD
 ══════════════════════════════════════════ */
 async function loadData() {
-  /* Fetch paralelo: años + hitos */
-  const [years, launches] = await Promise.all([
+  /* Fetch paralelo: config + años + hitos */
+  const [cfgRows, years, launches] = await Promise.all([
+    supa('timeline_config?select=*&id=eq.1'),
     supa('timeline_years?select=*&order=year.asc'),
     supa('timeline_launches?select=*&order=position.asc')
   ]);
+
+  /* Aplicar configuración global (sobreescribe caché localStorage) */
+  if (Array.isArray(cfgRows) && cfgRows[0]) applyConfig(cfgRows[0]);
   years.sort((a, b) => a.year - b.year);
 
   /* Actualizar rango de años en header y título */
