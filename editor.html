@@ -447,9 +447,11 @@ function renderLaunches(filterYearId = '', searchText = '') {
             <span class="year-pill">${y ? y.year : '?'}</span>
             &nbsp;${l.name}${tagBadge(l)}
           </div>
-          <div class="card-meta">${l.group==='n'?'Nuevo':'Actualización'} · ${l.item_count ? l.item_count+' items' : '—'} · ${fmtDate(l.launch_date)}</div>
+          <div class="card-meta">${l.group==='w'?'Actualización':'Nuevo'} · ${l.item_count ? l.item_count+' items' : '—'} · ${fmtDate(l.launch_date)}</div>
         </div>
         <div class="card-actions">
+          <button class="btn btn-move" data-id="${l.id}" data-dir="up" style="padding:3px 7px;font-size:13px;line-height:1;" title="Subir">↑</button>
+          <button class="btn btn-move" data-id="${l.id}" data-dir="dn" style="padding:3px 7px;font-size:13px;line-height:1;" title="Bajar">↓</button>
           <button class="btn btn-danger btn-del" data-id="${l.id}" style="padding:4px 10px;font-size:9px;">Eliminar</button>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" style="color:var(--g40);transition:transform .2s" class="chevron"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
@@ -493,13 +495,37 @@ function renderLaunches(filterYearId = '', searchText = '') {
 
     /* toggle */
     card.querySelector('.card-header').addEventListener('click', e => {
-      if (e.target.closest('.btn-del')) return;
+      if (e.target.closest('.btn-del') || e.target.closest('.btn-move')) return;
       const body = document.getElementById(`launch-body-${l.id}`);
       const chev = card.querySelector('.chevron');
       const hdr  = card.querySelector('.card-header');
       const open = body.classList.toggle('open');
       hdr.classList.toggle('open', open);
       chev.style.transform = open ? 'rotate(180deg)' : '';
+    });
+
+    /* reordenar ↑↓ */
+    card.querySelectorAll('.btn-move').forEach(btn => {
+      btn.addEventListener('click', async e => {
+        e.stopPropagation();
+        const dir    = btn.dataset.dir;
+        /* Todos los hitos del mismo año, ordenados por position luego id */
+        const group  = launches
+          .filter(x => x.year_id === l.year_id)
+          .sort((a, b) => (a.position - b.position) || (a.id - b.id));
+        const ci     = group.findIndex(x => x.id === l.id);
+        const si     = dir === 'up' ? ci - 1 : ci + 1;
+        if (si < 0 || si >= group.length) return;
+        /* Intercambiar y reasignar posiciones 0,1,2... */
+        [group[ci], group[si]] = [group[si], group[ci]];
+        await Promise.all(
+          group.map((item, idx) =>
+            api.patch('timeline_launches', item.id, { position: idx })
+          )
+        );
+        toast('Orden actualizado ✓');
+        loadAll();
+      });
     });
 
     /* eliminar */
@@ -622,7 +648,7 @@ document.getElementById('search-launch').addEventListener('input', () => {
 async function loadAll() {
   [years, launches] = await Promise.all([
     api.get('timeline_years', 'select=*&order=sort_order.asc'),
-    api.get('timeline_launches', 'select=*&order=launch_date.asc.nullslast,id.asc')
+    api.get('timeline_launches', 'select=*&order=year_id.asc,position.asc,id.asc')
   ]);
 
   /* Poblar selects de años */

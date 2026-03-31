@@ -537,6 +537,13 @@ function buildSub(row) {
   return parts.length ? parts.join(' · ') : null;
 }
 
+/* Convierte el campo market de la DB a HTML con saltos de línea.
+   Acepta \n literal, \\n escapado o <br> guardado directamente. */
+function mktHtml(m) {
+  if (!m) return '';
+  return m.replace(/\\n|\n|<br\s*\/?>/gi, '<br>');
+}
+
 const sh = i => i % 2 === 0 ? 58 : 52;
 const THA = [18,12,16,10,14,18,12,16];
 const THB = [14,18,10,16,12,14,18,10];
@@ -644,7 +651,7 @@ function renderAll(YEARS) {
         ${y.rev  ?`<div class="ys-rev">${y.rev}</div>`:''}
         ${y.calc ?`<div class="ys-calc">${y.calc}</div>`:''}
       </div>
-      ${y.mkt?`<div class="year-market"><div class="market-pill">${y.mkt}</div></div>`:''}
+      ${y.mkt?`<div class="year-market"><div class="market-pill">${mktHtml(y.mkt)}</div></div>`:''}
       <div class="seg-body">
         <div class="row-above">${ab.join('')}</div>
         <div class="row-below">${bl.join('')}</div>
@@ -654,8 +661,9 @@ function renderAll(YEARS) {
 
   /* ── FICHAS ── */
   YEARS.forEach((y, i) => {
-    const nL = y.ll.filter(l => l.g==='n');
-    const wL = y.ll.filter(l => l.g==='w');
+    /* grupo null/undefined → por defecto Nuevos Lanzamientos */
+    const nL = y.ll.filter(l => l.g !== 'w');
+    const wL = y.ll.filter(l => l.g === 'w');
 
     const node = document.createElement('div');
     node.className = 'fc-node' + (i===0?' active':'');
@@ -689,7 +697,7 @@ function renderAll(YEARS) {
         <div class="fc-sts">
           ${y.items?`<div class="fc-st"><div class="sv">${y.items}</div><div class="sl">Items${y.calc?' — '+y.calc:''}</div></div>`:''}
           ${y.rev  ?`<div class="fc-sdv"></div><div class="fc-st"><div class="sv">${y.rev}</div><div class="sl">Revenue Est.</div></div>`:''}
-          ${y.mkt  ?`<div class="fc-sdv"></div><div class="market-pill">${y.mkt}</div>`:''}
+          ${y.mkt  ?`<div class="fc-sdv"></div><div class="market-pill">${mktHtml(y.mkt)}</div>`:''}
         </div>
         <div class="fc-nav">
           <button onclick="fActivate(${i-1})" ${i===0?'disabled':''}>
