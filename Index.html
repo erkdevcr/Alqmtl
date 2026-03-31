@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Línea del Tiempo 2026–2030 — Quinquenio Joyas</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── TEMA: tokens que cambian con .dark en <html> ── */
+:root {
+  --bg:   #ffffff;  --fg:   #000000;
+  --g10:  #f5f5f5;  --g20:  #e0e0e0;
+  --g40:  #999999;  --g60:  #666666;  --g90:  #1a1a1a;
+  --font: 'Space Grotesk','Helvetica Neue',Arial,sans-serif;
+  --seg-w: 86px;   /* collapsed segment width */
+  --cd:    58px;   /* year circle diameter    */
+}
+html.dark {
+  --bg:  #111c26;
+  --fg:  #d8e8f2;
+  --g10: #1a2c3a;  --g20: #2e4455;
+  --g40: #627a8e;  --g60: #8aacbe;  --g90: #c8dce8;
+}
+
+html.dark body {
+  background: linear-gradient(rgb(0,0,0) 0%, rgb(26,32,40) 50%, rgb(41,56,69) 100%) fixed;
+}
+
+html.dark .tl-line,
+html.dark .tl-accent            { background: #5c7e96; }
+html.dark .stem                 { background: #4e6878; }
+html.dark .stem::after          { background: #a8c8dc;
+                                   box-shadow: 0 0 0 2.5px rgb(18,26,36); }
+html.dark .circle-inner         { background: #ddeef8; color: #0a1825; }
+html.dark .circle-inner.current { background: #0a1825 !important; color: #ddeef8 !important;
+                                   border-color: #ddeef8 !important; }
+html.dark .fc-tl-line,
+html.dark .fc-progress          { background: #5c7e96; }
+html.dark .fc-circ              { background: #ddeef8; color: #0a1825; }
+html.dark .fc-circ.current      { background: #0a1825 !important; color: #ddeef8 !important;
+                                   border-color: #ddeef8 !important; }
+html.dark .fc-tick              { background: #2a3e52; }
+html.dark .fc-node.active .fc-tick { background: #6090aa; }
+
+/* ── RESET ── */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html, body {
+  font-family: var(--font);
+  background: var(--bg); color: var(--fg);
+  height:100%; overflow:hidden;
+  display:flex; flex-direction:column;
+  -webkit-font-smoothing:antialiased;
+  transition: background .3s, color .3s;
+}
+
+/* ══════════════════════════════════════════
+   LOADING SCREEN
+══════════════════════════════════════════ */
+#loading {
+  position:fixed; inset:0; background:var(--bg);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:16px; z-index:999;
+  transition: opacity .4s ease;
+}
+#loading.fade-out { opacity:0; pointer-events:none; }
+.loading-dot-row { display:flex; gap:8px; }
+.loading-dot {
+  width:7px; height:7px; border-radius:50%; background:var(--fg);
+  animation: ldot .9s ease-in-out infinite;
+}
+.loading-dot:nth-child(2) { animation-delay:.15s; }
+.loading-dot:nth-child(3) { animation-delay:.30s; }
+@keyframes ldot {
+  0%,100% { opacity:.15; transform:scale(.8); }
+  50%     { opacity:1;   transform:scale(1.2); }
+}
+.loading-label {
+  font-size:8px; font-weight:600; letter-spacing:.3em;
+  text-transform:uppercase; color:var(--g40);
+}
+
+/* ══════════════════════════════════════════
+   HEADER
+══════════════════════════════════════════ */
+.header {
+  flex-shrink:0;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:15px 48px; gap:16px;
+  border-bottom:1px solid var(--g20);
+}
+.title-group { display:flex; align-items:center; gap:18px; flex-shrink:0; }
+.title-group h1 { font-size:19px; font-weight:300; color:var(--fg); letter-spacing:-.02em; line-height:1.15; }
+.title-group h1 span { display:block; font-size:7.5px; font-weight:500; color:var(--g60); letter-spacing:.28em; text-transform:uppercase; margin-top:4px; }
+.hd  { width:1px; height:34px; background:var(--g20); }
+.yr  { font-size:22px; font-weight:700; color:var(--fg); letter-spacing:-.03em; flex-shrink:0; }
+
+.hdr-ctr { display:flex; gap:8px; align-items:center; }
+
+.btn-pill {
+  display:inline-flex; align-items:center; gap:7px;
+  border:1.5px solid var(--g20); background:none;
+  padding:5px 14px;
+  font-family:var(--font); font-size:8.5px; font-weight:600;
+  letter-spacing:.18em; text-transform:uppercase; color:var(--fg);
+  cursor:pointer; white-space:nowrap;
+  transition:border-color .2s, background .2s, color .2s;
+}
+.btn-pill:hover { border-color:var(--fg); background:var(--fg); color:var(--bg); }
+.btn-pill svg   { width:11px; height:11px; flex-shrink:0; transition:stroke .2s; }
+
+.btn-icon {
+  width:30px; height:30px; flex-shrink:0;
+  border:1.5px solid var(--g20); background:none;
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+  color:var(--fg);
+  transition:border-color .2s, background .2s;
+}
+.btn-icon:hover { border-color:var(--fg); background:var(--g10); }
+.btn-icon svg   { width:13px; height:13px; }
+
+.hdr-right { display:flex; flex-direction:column; align-items:flex-end; gap:4px; flex-shrink:0; }
+.alq-brand  { display:flex; align-items:center; gap:7px; }
+.alq-brand .dot {
+  width:7px; height:7px; background:var(--fg); border-radius:50%;
+  animation:brand-pulse 2.5s ease-in-out infinite;
+}
+@keyframes brand-pulse {
+  0%,100%{ box-shadow:0 0 0 0 rgba(128,128,128,.3); transform:scale(1); }
+  50%    { box-shadow:0 0 0 6px rgba(128,128,128,0); transform:scale(1.15); }
+}
+.alq-brand span { font-size:8px; font-weight:500; letter-spacing:.3em; text-transform:uppercase; color:var(--fg); }
+.hdr-badge { font-size:7px; font-weight:500; letter-spacing:.1em; text-transform:uppercase; color:var(--g40); }
+
+/* ══════════════════════════════════════════
+   VIEWS
+══════════════════════════════════════════ */
+.view          { display:none; flex-direction:column; flex:1; overflow:hidden; }
+.view.active   { display:flex; }
+
+/* ── SHARED: Tags ── */
+.tag { display:inline-block; font-size:6px; font-weight:700; padding:1px 4px; margin-left:3px; letter-spacing:.1em; text-transform:uppercase; vertical-align:middle; }
+.tag-new { background:var(--fg); color:var(--bg); }
+.tag-upd { background:var(--g20); color:var(--g90); }
+.tag-urg { background:var(--fg); color:var(--bg); animation:blink 1.8s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+/* ── SHARED: Market pill ── */
+.market-pill {
+  display:inline-block; border:1.5px solid var(--fg);
+  padding:2px 9px; font-size:7px; font-weight:700;
+  letter-spacing:.2em; text-transform:uppercase; color:var(--fg);
+  white-space:normal; text-align:center; line-height:1.5;
+}
+
+/* ══════════════════════════════════════════
+   VISTA ACORDEÓN
+══════════════════════════════════════════ */
+.tl-wrap { flex:1; position:relative; overflow:hidden; }
+
+.tl-line {
+  position:absolute; left:0; right:0; top:50%;
+  height:2px; background:var(--fg);
+  transform:translateY(-50%); z-index:1;
+}
+
+.tl-accent {
+  position:absolute;
+  top:calc(50% - 3px);
+  height:6px;
+  background:var(--fg);
+  z-index:1;
+  transition: left  .55s cubic-bezier(.4,0,.2,1),
+              width .55s cubic-bezier(.4,0,.2,1);
+}
+
+.segs { display:flex; height:100%; position:relative; z-index:2; }
+
+.seg {
+  position:relative;
+  flex:0 0 var(--seg-w);
+  min-width:0;
+  overflow:hidden;
+  transition: flex-basis .55s cubic-bezier(.4,0,.2,1),
+              flex-grow   .55s cubic-bezier(.4,0,.2,1),
+              opacity     .35s ease,
+              max-width   .55s cubic-bezier(.4,0,.2,1);
+}
+.seg.active          { flex:1 1 0; }
+.seg.hidden          { flex:0 0 0px !important; max-width:0 !important;
+                        opacity:0; pointer-events:none; overflow:hidden; }
+.seg:not(.active)    { cursor:pointer; }
+.seg:not(.active):hover .circle-inner { transform:scale(1.07); }
+
+.circle-wrap {
+  position:absolute; left:0; width:var(--seg-w);
+  top:50%; transform:translateY(-50%);
+  display:flex; justify-content:center; align-items:center;
+  z-index:12; pointer-events:none;
+}
+.circle-inner {
+  width:var(--cd); height:var(--cd); border-radius:50%;
+  background:var(--fg); color:var(--bg);
+  display:flex; align-items:center; justify-content:center;
+  font-size:13px; font-weight:700; letter-spacing:-.02em;
+  transition:transform .35s cubic-bezier(.4,0,.2,1);
+  position:relative; z-index:2;
+}
+.seg.active .circle-inner          { transform:scale(1.12); }
+.circle-inner.current {
+  background:var(--bg); color:var(--fg);
+  border:2.5px solid var(--fg);
+  animation:node-pulse 2.5s ease-in-out infinite;
+}
+.seg.active .circle-inner.current  { animation:none; }
+@keyframes node-pulse {
+  0%,100%{ box-shadow:0 0 0  0 rgba(128,128,128,.2); }
+  50%    { box-shadow:0 0 0 14px rgba(128,128,128,0); }
+}
+
+.year-stats {
+  position:absolute; left:0; width:var(--seg-w);
+  top:calc(50% + 36px); text-align:center; z-index:12;
+  opacity:0; pointer-events:none; transition:opacity .2s;
+}
+.seg.active .year-stats { opacity:1; transition:opacity .4s .3s; }
+.year-stats .ys-main { font-size:11px; font-weight:700; color:var(--fg); letter-spacing:-.02em; }
+.year-stats .ys-rev  { font-size:9px;  font-weight:500; color:var(--g60); margin-top:2px; }
+.year-stats .ys-calc { font-size:7.5px; font-weight:400; color:var(--g40); margin-top:1px; }
+
+.year-market {
+  position:absolute; left:0; width:var(--seg-w);
+  bottom:calc(50% + 36px); display:flex; justify-content:center;
+  z-index:12; opacity:0; pointer-events:none; transition:opacity .2s;
+}
+.seg.active .year-market { opacity:1; transition:opacity .4s .3s; }
+
+.seg-body {
+  position:absolute; left:var(--seg-w); right:0; top:0; bottom:0;
+  opacity:0; pointer-events:none; transition:opacity .2s;
+}
+.seg.active .seg-body { opacity:1; pointer-events:all; transition:opacity .45s .28s; }
+
+.row-above {
+  position:absolute; left:0; right:0;
+  top:0; bottom:calc(50% + 1px);
+}
+.row-below {
+  position:absolute; left:0; right:0;
+  top:calc(50% + 1px); bottom:0;
+}
+
+.hito {
+  position:absolute;
+  display:flex; flex-direction:column; align-items:center;
+  transform:translateX(-50%);
+}
+.row-above .hito { bottom:0; justify-content:flex-end;   }
+.row-below .hito { top:0;    justify-content:flex-start; }
+
+.hlabel { font-size:9.5px; font-weight:500; color:var(--fg); line-height:1.4; text-align:center; max-width:110px; }
+.hlabel .hdet {
+  font-weight:400; color:var(--g60); font-size:8px; margin-top:1px;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+}
+.hsub  { font-size:7.5px; color:var(--g40); text-align:center; margin-top:2px; max-width:110px; }
+
+.stem  { width:1px; background:var(--fg); height:var(--sh,46px); position:relative; flex-shrink:0; }
+.stem::after {
+  content:'';
+  position:absolute; left:50%; transform:translateX(-50%);
+  width:11px; height:11px;
+  background:var(--fg); border-radius:50%;
+  box-shadow:0 0 0 2.5px var(--bg);
+}
+.row-above .hito .stem { margin-top:5px; }
+.row-above .hito .stem::after { bottom:-5.5px; }
+.row-below .hito .stem { margin-bottom:5px; }
+.row-below .hito .stem::after { top:-5.5px; }
+
+/* ══════════════════════════════════════════
+   VISTA FICHAS
+══════════════════════════════════════════ */
+.fc-tl { flex-shrink:0; padding:0 52px; }
+.fc-tl-outer { position:relative; height:118px; display:flex; align-items:center; }
+.fc-tl-line  { position:absolute; left:0; right:0; top:50%; height:2px; background:var(--fg); transform:translateY(-50%); }
+.fc-progress {
+  position:absolute; left:0; top:50%; height:2px; background:var(--fg);
+  transform:translateY(-50%); z-index:2;
+  transition:width .5s cubic-bezier(.4,0,.2,1);
+}
+.fc-years { position:relative; width:100%; display:flex; justify-content:space-between; z-index:5; }
+
+.fc-node  { display:flex; flex-direction:column; align-items:center; cursor:pointer; user-select:none; }
+.fc-ticks-a, .fc-ticks-b { display:flex; gap:3px; height:18px; justify-content:center; min-width:52px; }
+.fc-ticks-a { align-items:flex-end;   margin-bottom:4px; }
+.fc-ticks-b { align-items:flex-start; margin-top:4px; }
+.fc-tick { width:2px; background:var(--g20); border-radius:1px; transition:background .3s; }
+.fc-node.active .fc-tick { background:var(--fg); }
+
+.fc-circ {
+  width:50px; height:50px; border-radius:50%;
+  background:var(--fg); color:var(--bg);
+  display:flex; align-items:center; justify-content:center;
+  font-size:12px; font-weight:700; letter-spacing:-.02em;
+  position:relative; z-index:3;
+  transition:transform .3s, box-shadow .3s;
+}
+.fc-node.active .fc-circ { transform:scale(1.14); box-shadow:0 0 0 5px rgba(128,128,128,.12); }
+.fc-circ.current {
+  background:var(--bg); color:var(--fg); border:2.5px solid var(--fg);
+  animation:node-pulse 2.5s ease-in-out infinite;
+}
+.fc-node.active .fc-circ.current { animation:none; }
+
+.fc-sep    { height:1px; background:var(--g20); margin:0 52px; flex-shrink:0; }
+.fc-detail { flex:1; overflow:hidden; display:flex; flex-direction:column; }
+.fc-panes  { flex:1; position:relative; overflow:hidden; }
+
+.fc-pane {
+  position:absolute; inset:0; padding:18px 52px 14px;
+  display:flex; flex-direction:column; gap:14px;
+  opacity:0; transform:translateX(60px);
+  transition:opacity .35s ease, transform .35s cubic-bezier(.4,0,.2,1);
+  pointer-events:none; overflow-y:auto;
+}
+.fc-pane.active  { opacity:1; transform:translateX(0); pointer-events:all; }
+.fc-pane::-webkit-scrollbar { width:4px; }
+.fc-pane::-webkit-scrollbar-thumb { background:var(--g20); border-radius:2px; }
+
+.fc-ph  { display:flex; align-items:center; gap:20px; flex-shrink:0; }
+.fc-yrl { font-size:34px; font-weight:700; color:var(--fg); letter-spacing:-.04em; line-height:1; }
+.fc-sts { display:flex; gap:18px; align-items:center; }
+.fc-st  { display:flex; flex-direction:column; gap:2px; }
+.fc-st .sv { font-size:17px; font-weight:700; color:var(--fg); letter-spacing:-.03em; line-height:1; }
+.fc-st .sl { font-size:7.5px; font-weight:500; color:var(--g60); letter-spacing:.2em; text-transform:uppercase; }
+.fc-sdv { width:1px; height:30px; background:var(--g20); }
+.fc-nav { margin-left:auto; display:flex; gap:7px; }
+.fc-nav button {
+  width:32px; height:32px; border:1.5px solid var(--g20); background:none;
+  cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--fg);
+  transition:border-color .2s, background .2s;
+}
+.fc-nav button:hover:not(:disabled) { border-color:var(--fg); background:var(--g10); }
+.fc-nav button:disabled { opacity:.25; cursor:default; }
+.fc-nav button svg { width:13px; height:13px; }
+
+.fc-sec-lbl { font-size:7.5px; font-weight:700; letter-spacing:.25em; text-transform:uppercase; color:var(--g40); margin-bottom:5px; }
+.fc-cards   { display:flex; flex-wrap:wrap; gap:8px; }
+.fc-card    {
+  border:1.5px solid var(--g20); padding:10px 13px;
+  min-width:148px; max-width:210px; flex:1 1 148px;
+  background:var(--bg);
+  transition:border-color .2s, box-shadow .2s;
+}
+.fc-card:hover { border-color:var(--g60); box-shadow:0 2px 10px rgba(0,0,0,.07); }
+.fc-card-name   { font-size:11px; font-weight:600; color:var(--fg); line-height:1.35; margin-bottom:3px; }
+.fc-card-detail { font-size:9px; color:var(--g60); font-weight:400; line-height:1.4; margin-bottom:4px; }
+.fc-card-sub    { font-size:8px; color:var(--g40); font-weight:500; }
+
+/* ══════════════════════════════════════════
+   FOOTER
+══════════════════════════════════════════ */
+.footer {
+  flex-shrink:0; display:flex; align-items:center; justify-content:space-between;
+  padding:9px 48px 12px; border-top:1px solid var(--g10);
+}
+.legend { display:flex; gap:16px; }
+.li     { display:flex; align-items:center; gap:6px; font-size:7.5px; color:var(--g60); letter-spacing:.04em; font-weight:500; }
+.lsw    { width:9px; height:9px; flex-shrink:0; }
+.hint   { font-size:7.5px; color:var(--g40); letter-spacing:.06em; }
+
+@media (prefers-reduced-motion:reduce) {
+  .circle-inner.current, .fc-circ.current, .tag-urg, .alq-brand .dot { animation:none; }
+}
+
+@media (max-width: 640px) {
+  :root { --seg-w: 64px; --cd: 44px; }
+  .header { padding:10px 16px; gap:8px; }
+  .title-group h1 { font-size:14px; }
+  .yr  { font-size:16px; }
+  .hd  { display:none; }
+  .hdr-badge { display:none; }
+  .hlabel { font-size:8.5px; max-width:80px; }
+  .hsub   { font-size:6.5px; }
+  .footer { padding:6px 16px 8px; }
+  .legend { gap:8px; flex-wrap:wrap; }
+  .li     { font-size:6.5px; }
+  .hint   { display:none; }
+}
+@media (max-width: 400px) {
+  :root { --seg-w: 54px; --cd: 38px; }
+  .btn-pill { padding:4px 8px; font-size:7.5px; }
+  .hdr-ctr  { gap:4px; }
+  .circle-inner { font-size:10px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════ LOADING ══════ -->
+<div id="loading">
+  <div class="loading-dot-row">
+    <div class="loading-dot"></div>
+    <div class="loading-dot"></div>
+    <div class="loading-dot"></div>
+  </div>
+  <div class="loading-label">Cargando datos</div>
+</div>
+
+<!-- ══════ HEADER ══════ -->
+<header class="header">
+  <div class="title-group">
+    <h1>Línea del Tiempo<span>Quinquenio Joyas</span></h1>
+    <div class="hd"></div>
+    <div class="yr">2026–2030</div>
+  </div>
+
+  <div class="hdr-ctr">
+    <button class="btn-pill" id="viewToggle"></button>
+    <button class="btn-icon" id="themeToggle" title="Cambiar tema">
+      <svg id="iMoon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+      <svg id="iSun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
+        <circle cx="12" cy="12" r="5"/>
+        <line x1="12" y1="1"  x2="12" y2="3"/> <line x1="12" y1="21" x2="12" y2="23"/>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/> <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+        <line x1="1" y1="12" x2="3" y2="12"/> <line x1="21" y1="12" x2="23" y2="12"/>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/> <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="hdr-right">
+    <div class="alq-brand"><div class="dot"></div><span>Alquemis</span></div>
+    <div class="hdr-badge">Actualizada Mar 2026 · Fuente: Board Lanzamientos KL</div>
+  </div>
+</header>
+
+<!-- ══════ VISTA ACORDEÓN ══════ -->
+<section id="va" class="view active">
+  <div class="tl-wrap">
+    <div class="tl-line"></div>
+    <div class="tl-accent" id="tlAccent"></div>
+    <div class="segs" id="segs"></div>
+  </div>
+</section>
+
+<!-- ══════ VISTA FICHAS ══════ -->
+<section id="vf" class="view">
+  <div class="fc-tl">
+    <div class="fc-tl-outer">
+      <div class="fc-tl-line"></div>
+      <div class="fc-progress" id="fcProg"></div>
+      <div class="fc-years"   id="fcYears"></div>
+    </div>
+  </div>
+  <div class="fc-sep"></div>
+  <div class="fc-detail">
+    <div class="fc-panes" id="fcPanes"></div>
+  </div>
+</section>
+
+<!-- ══════ FOOTER ══════ -->
+<footer class="footer">
+  <div class="legend">
+    <div class="li"><div class="lsw" style="background:var(--fg)"></div>NEW — Nuevo vs. plan original</div>
+    <div class="li"><div class="lsw" style="background:var(--g20);border:1px solid var(--g40)"></div>UPD — Detalle actualizado</div>
+    <div class="li"><div class="lsw" style="background:var(--fg);animation:blink 1.8s ease-in-out infinite"></div>URG — Urgente en board</div>
+    <div class="li"><div class="lsw" style="background:var(--bg);border:1px solid var(--g40)"></div>* — Proyección</div>
+  </div>
+  <div class="hint" id="hint">Clic en un año para desplegar &nbsp;·&nbsp; ← → teclado</div>
+</footer>
+
+<script>
+/* ══════════════════════════════════════════
+   SUPABASE CONFIG
+══════════════════════════════════════════ */
+const SUPA_URL = 'https://utkqzxsnyvblqndtkntn.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV0a3F6eHNueXZibHFuZHRrbnR4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5MTU5MjEsImV4cCI6MjA5MDQ5MTkyMX0.bxOZDHRtsYBkplffNzoxc2-OQMvG8qXdX_bXxg_CYlA';
+
+const supa = (path) => fetch(`${SUPA_URL}/rest/v1/${path}`, {
+  headers: {
+    'apikey': SUPA_KEY,
+    'Authorization': `Bearer ${SUPA_KEY}`,
+    'Content-Type': 'application/json'
+  }
+}).then(r => r.json());
+
+/* ── helpers ── */
+const TM  = { new:'NEW', upd:'UPD', urg:'URG' };
+
+/* Construye el tag combinando status_tag + is_urgent */
+function buildTag(row) {
+  if (row.is_urgent) return `<span class="tag tag-urg">URG</span>`;
+  if (row.status_tag) return `<span class="tag tag-${row.status_tag}">${TM[row.status_tag]}</span>`;
+  return '';
+}
+
+/* Formatea fecha de DB (YYYY-MM-DD) a texto corto: "Sep 2026", "Ene 2027" */
+const MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+function fmtDate(dateStr) {
+  if (!dateStr) return null;
+  const [y, m] = dateStr.split('-');
+  return `${MESES[parseInt(m,10)-1]} ${y}`;
+}
+
+/* Construye el sub-label del hito: items + fecha si existen */
+function buildSub(row) {
+  const parts = [];
+  if (row.item_count) parts.push(`${row.item_count} items`);
+  if (row.launch_date) parts.push(fmtDate(row.launch_date));
+  return parts.length ? parts.join(' · ') : null;
+}
+
+const sh = i => i % 2 === 0 ? 58 : 52;
+const THA = [18,12,16,10,14,18,12,16];
+const THB = [14,18,10,16,12,14,18,10];
+
+/* ══════════════════════════════════════════
+   FETCH Y BUILD
+══════════════════════════════════════════ */
+async function loadData() {
+  /* Fetch paralelo: años + hitos */
+  const [years, launches] = await Promise.all([
+    supa('timeline_years?select=*&order=sort_order.asc'),
+    supa('timeline_launches?select=*&order=position.asc')
+  ]);
+
+  /* Agrupar hitos por year_id */
+  const launchMap = {};
+  launches.forEach(l => {
+    if (!launchMap[l.year_id]) launchMap[l.year_id] = [];
+    launchMap[l.year_id].push(l);
+  });
+
+  /* Ordenar hitos: primero por launch_date si existe, luego por position */
+  Object.values(launchMap).forEach(arr => {
+    arr.sort((a, b) => {
+      if (a.launch_date && b.launch_date) return a.launch_date.localeCompare(b.launch_date);
+      if (a.launch_date) return -1;
+      if (b.launch_date) return 1;
+      return a.position - b.position;
+    });
+  });
+
+  /* Construir YEARS en el mismo formato que usaba el HTML original */
+  const YEARS = years.map(y => ({
+    year:  y.year,
+    cur:   y.is_current,
+    items: y.items_label,
+    calc:  y.items_calc,
+    rev:   y.revenue,
+    mkt:   y.market,
+    ll: (launchMap[y.id] || []).map(l => ({
+      n:   l.name,
+      d:   l.detail,
+      sub: buildSub(l),
+      tag: l.is_urgent ? null : l.status_tag,   // tag visual
+      urg: l.is_urgent,                          // urgente separado
+      g:   l.group
+    }))
+  }));
+
+  return YEARS;
+}
+
+/* ══════════════════════════════════════════
+   RENDER
+══════════════════════════════════════════ */
+function renderAll(YEARS) {
+  const segsEl   = document.getElementById('segs');
+  const tlAccent = document.getElementById('tlAccent');
+  const fcYears  = document.getElementById('fcYears');
+  const fcPanes  = document.getElementById('fcPanes');
+  const fcProg   = document.getElementById('fcProg');
+  let   aActive  = 0;
+  let   fActive  = 0;
+
+  /* ── ACORDEÓN ── */
+  YEARS.forEach((y, yi) => {
+    const N  = y.ll.length;
+    const ab = [], bl = [];
+
+    y.ll.forEach((l, i) => {
+      const x     = ((i + 0.5) / N * 100).toFixed(3);
+      const above = i % 2 === 0;
+      const tagHtml = l.urg
+        ? `<span class="tag tag-urg">URG</span>`
+        : (l.tag ? `<span class="tag tag-${l.tag}">${TM[l.tag]}</span>` : '');
+      const lbl = `<div class="hlabel">${l.n}${tagHtml}${l.d?`<span class="hdet">${l.d}</span>`:''}</div>${l.sub?`<div class="hsub">${l.sub}</div>`:''}`;
+      const stm = `<div class="stem" style="--sh:${sh(i)}px"></div>`;
+      const html = `<div class="hito" style="left:${x}%">${above ? lbl+stm : stm+lbl}</div>`;
+      above ? ab.push(html) : bl.push(html);
+    });
+
+    const seg = document.createElement('div');
+    seg.className = `seg${yi===0?' active':''}`;
+    seg.dataset.yi = yi;
+    seg.innerHTML = `
+      <div class="circle-wrap">
+        <div class="circle-inner${y.cur?' current':''}">${y.year}</div>
+      </div>
+      <div class="year-stats">
+        ${y.items?`<div class="ys-main">${y.items} Items</div>`:''}
+        ${y.rev  ?`<div class="ys-rev">${y.rev}</div>`:''}
+        ${y.calc ?`<div class="ys-calc">${y.calc}</div>`:''}
+      </div>
+      ${y.mkt?`<div class="year-market"><div class="market-pill">${y.mkt}</div></div>`:''}
+      <div class="seg-body">
+        <div class="row-above">${ab.join('')}</div>
+        <div class="row-below">${bl.join('')}</div>
+      </div>`;
+    segsEl.appendChild(seg);
+  });
+
+  /* ── FICHAS ── */
+  YEARS.forEach((y, i) => {
+    const nL = y.ll.filter(l => l.g==='n');
+    const wL = y.ll.filter(l => l.g==='w');
+
+    const node = document.createElement('div');
+    node.className = 'fc-node' + (i===0?' active':'');
+    node.dataset.i = i;
+    node.innerHTML = `
+      <div class="fc-ticks-a">${nL.slice(0,8).map((_,j)=>`<div class="fc-tick" style="height:${THA[j]}px"></div>`).join('')}</div>
+      <div class="fc-circ${y.cur?' current':''}">${y.year}</div>
+      <div class="fc-ticks-b">${wL.slice(0,8).map((_,j)=>`<div class="fc-tick" style="height:${THB[j]}px"></div>`).join('')}</div>`;
+    node.addEventListener('click', () => fActivate(i));
+    fcYears.appendChild(node);
+
+    const pane = document.createElement('div');
+    pane.className = 'fc-pane' + (i===0?' active':'');
+    pane.dataset.i = i;
+
+    const cardRow = arr => arr.map(l => {
+      const tagHtml = l.urg
+        ? `<span class="tag tag-urg">URG</span>`
+        : (l.tag ? `<span class="tag tag-${l.tag}">${TM[l.tag]}</span>` : '');
+      return `
+        <div class="fc-card">
+          <div class="fc-card-name">${l.n}${tagHtml}</div>
+          ${l.d  ?`<div class="fc-card-detail">${l.d}</div>`:''}
+          ${l.sub?`<div class="fc-card-sub">${l.sub}</div>`:''}
+        </div>`;
+    }).join('');
+
+    pane.innerHTML = `
+      <div class="fc-ph">
+        <div class="fc-yrl">${y.year}</div>
+        <div class="fc-sts">
+          ${y.items?`<div class="fc-st"><div class="sv">${y.items}</div><div class="sl">Items${y.calc?' — '+y.calc:''}</div></div>`:''}
+          ${y.rev  ?`<div class="fc-sdv"></div><div class="fc-st"><div class="sv">${y.rev}</div><div class="sl">Revenue Est.</div></div>`:''}
+          ${y.mkt  ?`<div class="fc-sdv"></div><div class="market-pill">${y.mkt}</div>`:''}
+        </div>
+        <div class="fc-nav">
+          <button onclick="fActivate(${i-1})" ${i===0?'disabled':''}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <button onclick="fActivate(${i+1})" ${i===YEARS.length-1?'disabled':''}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+      </div>
+      ${nL.length?`<div><div class="fc-sec-lbl">Nuevos Lanzamientos</div><div class="fc-cards">${cardRow(nL)}</div></div>`:''}
+      ${wL.length?`<div><div class="fc-sec-lbl">Actualizaciones de Línea</div><div class="fc-cards">${cardRow(wL)}</div></div>`:''}`;
+    fcPanes.appendChild(pane);
+  });
+
+  /* ── FUNCIONES DE NAVEGACIÓN ── */
+  function updateVisible(idx) {
+    document.querySelectorAll('.seg').forEach((s, i) => {
+      s.classList.toggle('hidden', i < idx - 1 || i > idx + 2);
+    });
+  }
+
+  function aActivate(idx) {
+    if (idx === aActive) return;
+    aActive = idx;
+    document.querySelectorAll('.seg').forEach((s,i) => s.classList.toggle('active', i===idx));
+    updateVisible(idx);
+    posAccent(idx);
+  }
+
+  const SEG_W = 86;
+  function posAccent(idx) {
+    const segsArr   = [...document.querySelectorAll('.seg')];
+    const visArr    = segsArr.filter(s => !s.classList.contains('hidden'));
+    const W         = segsEl.offsetWidth;
+    const expW      = W - (visArr.length - 1) * SEG_W;
+    const beforeVis = visArr.findIndex(s => +s.dataset.yi === idx);
+    const leftX     = beforeVis * SEG_W + SEG_W / 2;
+    tlAccent.style.left  = leftX + 'px';
+    tlAccent.style.width = expW  + 'px';
+  }
+
+  segsEl.addEventListener('click', e => {
+    const s = e.target.closest('.seg');
+    if (s) aActivate(+s.dataset.yi);
+  });
+
+  function fActivate(idx) {
+    if (idx < 0 || idx >= YEARS.length || idx === fActive) return;
+    const dir  = idx > fActive ? 1 : -1;
+    const prev = fcPanes.querySelector('.fc-pane.active');
+    const next = fcPanes.querySelectorAll('.fc-pane')[idx];
+    prev.classList.remove('active');
+    prev.style.cssText = `opacity:0;transform:translateX(${dir>0?'-60px':'60px'})`;
+    next.style.cssText = `opacity:0;transform:translateX(${dir*60}px)`;
+    next.classList.add('active');
+    requestAnimationFrame(() => requestAnimationFrame(() => { next.style.cssText = ''; }));
+    setTimeout(() => { prev.style.cssText = ''; }, 420);
+    fActive = idx;
+    fcYears.querySelectorAll('.fc-node').forEach((n,i) => n.classList.toggle('active', i===idx));
+    updateFcProg();
+  }
+
+  function updateFcProg() {
+    const W    = fcYears.offsetWidth;
+    if (!W) return;
+    const node = fcYears.querySelectorAll('.fc-node')[fActive];
+    fcProg.style.width = ((node.offsetLeft + node.offsetWidth/2) / W * 100) + '%';
+  }
+
+  /* ── VIEW SWITCH ── */
+  const vaEl  = document.getElementById('va');
+  const vfEl  = document.getElementById('vf');
+  const vBtn  = document.getElementById('viewToggle');
+  const hint  = document.getElementById('hint');
+  let   curV  = 'accordion';
+
+  const SVG_CARDS    = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="3" width="6" height="10" rx=".5"/><rect x="9" y="3" width="6" height="10" rx=".5"/></svg>`;
+  const SVG_TIMELINE = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="1" y1="8" x2="15" y2="8"/><circle cx="4" cy="8" r="1.8" fill="currentColor"/><circle cx="8" cy="8" r="1.8" fill="currentColor"/><circle cx="12" cy="8" r="1.8" fill="currentColor"/></svg>`;
+
+  function setViewBtn(v) {
+    vBtn.innerHTML = v==='accordion'
+      ? SVG_CARDS    + ' Vista Fichas'
+      : SVG_TIMELINE + ' Vista Acordeón';
+  }
+
+  vBtn.addEventListener('click', () => {
+    if (curV === 'accordion') {
+      curV = 'fichas';
+      vaEl.classList.remove('active'); vfEl.classList.add('active');
+      setViewBtn('fichas');
+      hint.textContent = 'Clic en un año para ver detalle · ← → teclado';
+      if (aActive !== fActive) fActivate(aActive);
+      updateFcProg();
+    } else {
+      curV = 'accordion';
+      vfEl.classList.remove('active'); vaEl.classList.add('active');
+      setViewBtn('accordion');
+      hint.textContent = 'Clic en un año para desplegar · ← → teclado';
+      if (fActive !== aActive) aActivate(fActive);
+      posAccent(aActive);
+    }
+  });
+
+  /* ── THEME ── */
+  let dark = false;
+  document.getElementById('themeToggle').addEventListener('click', () => {
+    dark = !dark;
+    document.documentElement.classList.toggle('dark', dark);
+    document.getElementById('iMoon').style.display = dark ? 'none' : '';
+    document.getElementById('iSun').style.display  = dark ? ''     : 'none';
+  });
+
+  /* ── TOUCH ── */
+  (function () {
+    let tx = 0;
+    const va = document.getElementById('va');
+    va.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, { passive: true });
+    va.addEventListener('touchend',   e => {
+      const dx = e.changedTouches[0].clientX - tx;
+      if (Math.abs(dx) > 50) {
+        if (dx < 0) aActivate(Math.min(aActive + 1, YEARS.length - 1));
+        else        aActivate(Math.max(aActive - 1, 0));
+      }
+    }, { passive: true });
+  })();
+
+  /* ── KEYBOARD ── */
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') curV==='accordion' ? aActivate(Math.min(aActive+1,YEARS.length-1)) : fActivate(fActive+1);
+    if (e.key === 'ArrowLeft')  curV==='accordion' ? aActivate(Math.max(aActive-1,0))               : fActivate(fActive-1);
+  });
+
+  /* ── INIT ── */
+  setViewBtn('accordion');
+  updateVisible(0);
+  posAccent(0);
+  updateFcProg();
+  window.addEventListener('resize', () => { posAccent(aActive); updateFcProg(); });
+}
+
+/* ══════════════════════════════════════════
+   BOOT
+══════════════════════════════════════════ */
+(async () => {
+  try {
+    const YEARS = await loadData();
+    renderAll(YEARS);
+  } catch (err) {
+    console.error('Error cargando datos:', err);
+    document.getElementById('loading').innerHTML =
+      `<div class="loading-label" style="color:red">Error al conectar con Supabase</div>`;
+    return;
+  }
+
+  /* Ocultar loading */
+  const ld = document.getElementById('loading');
+  ld.classList.add('fade-out');
+  setTimeout(() => ld.remove(), 500);
+})();
+</script>
+</body>
+</html>
