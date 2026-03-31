@@ -77,7 +77,8 @@ body{font-family:var(--font);background:var(--g10);color:var(--fg);min-height:10
 }
 .card-header.open{border-bottom-color:var(--g20);}
 .card-title{font-size:13px;font-weight:600;}
-.card-meta{font-size:10px;color:var(--g60);margin-top:2px;}
+.card-meta{font-size:10px;color:var(--g60);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+@media(max-width:480px){.card-meta{white-space:normal;text-overflow:clip;}}
 .card-actions{display:flex;gap:6px;align-items:center;}
 .btn-del-year{
   background:none;border:none;cursor:pointer;padding:4px;border-radius:4px;
