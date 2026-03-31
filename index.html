@@ -551,8 +551,13 @@ function mktHtml(m) {
 }
 
 const sh = i => i % 2 === 0 ? 58 : 52;
-const THA = [18,12,16,10,14,18,12,16];
-const THB = [14,18,10,16,12,14,18,10];
+const TICK_HEIGHTS = [10,12,14,16,18,20];
+/* Genera n ticks con alturas aleatorias usando seed para que sean estables por año */
+function genTicks(n, seed) {
+  return Array.from({length: n}, (_, j) =>
+    `<div class="fc-tick" style="height:${TICK_HEIGHTS[(seed * 3 + j * 7) % TICK_HEIGHTS.length]}px"></div>`
+  ).join('');
+}
 
 /* ══════════════════════════════════════════
    FETCH Y BUILD
@@ -688,10 +693,11 @@ function renderAll(YEARS) {
     const node = document.createElement('div');
     node.className = 'fc-node' + (i===0?' active':'');
     node.dataset.i = i;
+    const tickN = Math.min(allLL.length, 6);
     node.innerHTML = `
-      <div class="fc-ticks-a">${allLL.slice(0,8).map((_,j)=>`<div class="fc-tick" style="height:${THA[j]}px"></div>`).join('')}</div>
+      <div class="fc-ticks-a">${genTicks(tickN, i)}</div>
       <div class="fc-circ${y.cur?' current':''}">${y.year}</div>
-      <div class="fc-ticks-b">${allLL.slice(8,16).map((_,j)=>`<div class="fc-tick" style="height:${THB[j]}px"></div>`).join('')}</div>`;
+      <div class="fc-ticks-b">${genTicks(tickN, i + 17)}</div>`;
     node.addEventListener('click', () => fActivate(i));
     fcYears.appendChild(node);
 
