@@ -125,15 +125,20 @@ html.dark #loading {
 .hdr-ctr { display:none; } /* movido a ctrl-panel */
 
 /* ── Lengüeta de controles ── */
-.yr-grp { display:flex; align-items:center; }
+.yr-grp { display:flex; align-items:center; gap:12px; }
 .ctrl-tab { display:flex; align-items:center; position:relative; }
+.ctrl-tab::before {
+  content:''; display:block;
+  width:1px; height:clamp(20px,1.8vw,34px);
+  background:var(--g20); flex-shrink:0; margin-right:0;
+}
 .ctrl-handle {
   width:18px; height:clamp(24px,2vw,38px); flex-shrink:0;
-  border:1.5px solid var(--g20); border-left:none;
+  border:none; border-left:none;
   background:none; cursor:pointer; color:var(--g40);
   display:flex; align-items:center; justify-content:center;
   border-radius:0 5px 5px 0;
-  transition:border-color .2s, background .2s, color .2s;
+  transition:color .2s;
   padding:0;
 }
 .ctrl-handle:hover { border-color:var(--fg); color:var(--fg); background:var(--g10); }
@@ -936,8 +941,8 @@ function renderAll(YEARS) {
 
   function setViewBtn(v) {
     vBtn.innerHTML = v==='accordion'
-      ? SVG_CARDS    + ' Vista Fichas'
-      : SVG_TIMELINE + ' Vista Acordeón';
+      ? SVG_CARDS    + ' Fichas'
+      : SVG_TIMELINE + ' Timeline';
   }
 
   vBtn.addEventListener('click', () => {
