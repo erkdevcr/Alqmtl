@@ -724,7 +724,7 @@ function renderAll(YEARS) {
   /* ── FUNCIONES DE NAVEGACIÓN ── */
   function updateVisible(idx) {
     document.querySelectorAll('.seg').forEach((s, i) => {
-      s.classList.toggle('hidden', i < idx - 1 || i > idx + 2);
+      s.classList.toggle('hidden', i < idx - 2 || i > idx + 1);
     });
   }
 
