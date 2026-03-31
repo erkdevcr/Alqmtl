@@ -500,7 +500,7 @@ function renderYears() {
       <div class="card-header" data-id="${y.id}">
         <div>
           <div class="card-title">${y.year} ${y.is_current ? '<span class="badge badge-new">ACTUAL</span>' : ''}</div>
-          <div class="card-meta">${y.items_label || '—'} items · ${y.revenue || '—'}${y.market ? ' · ' + y.market : ''}</div>
+          <div class="card-meta">${y.revenue || '—'}${y.market ? ' · ' + y.market : ''}</div>
         </div>
         <div class="card-actions">
           <button class="btn-del-year" title="Eliminar año" data-yid="${y.id}" data-ynum="${y.year}">
@@ -511,14 +511,6 @@ function renderYears() {
       </div>
       <div class="card-body" id="year-body-${y.id}">
         <div class="form-grid">
-          <div class="form-group">
-            <label>Items label</label>
-            <input type="text" value="${y.items_label||''}" data-table="timeline_years" data-id="${y.id}" data-field="items_label" placeholder="Ej: 198">
-          </div>
-          <div class="form-group">
-            <label>Items calc</label>
-            <input type="text" value="${y.items_calc||''}" data-table="timeline_years" data-id="${y.id}" data-field="items_calc" placeholder="Ej: 148 + 50 nuevos">
-          </div>
           <div class="form-group">
             <label>Revenue</label>
             <input type="text" value="${y.revenue||''}" data-table="timeline_years" data-id="${y.id}" data-field="revenue" placeholder="Ej: $1.65 MM">
