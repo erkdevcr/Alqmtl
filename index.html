@@ -172,21 +172,15 @@ html.dark #loading {
               width .55s cubic-bezier(.4,0,.2,1);
 }
 
-.segs { display:flex; height:100%; position:relative; z-index:2; }
+.segs { position:relative; width:100%; height:100%; z-index:2; }
 
 .seg {
-  position:relative;
-  flex:0 0 var(--seg-w);
-  min-width:0;
+  position:absolute; left:0; top:0; bottom:0;
   overflow:hidden;
-  transition: flex-basis .55s cubic-bezier(.4,0,.2,1),
-              flex-grow   .55s cubic-bezier(.4,0,.2,1),
-              opacity     .35s ease,
-              max-width   .55s cubic-bezier(.4,0,.2,1);
+  will-change: transform, width;
+  transition: transform .48s cubic-bezier(.4,0,.2,1),
+              width     .48s cubic-bezier(.4,0,.2,1);
 }
-.seg.active          { flex:1 1 0; }
-.seg.hidden          { flex:0 0 0px !important; max-width:0 !important;
-                        opacity:0; pointer-events:none; overflow:hidden; }
 .seg:not(.active)    { cursor:pointer; }
 .seg:not(.active):hover .circle-inner { transform:scale(1.07); }
 
@@ -729,55 +723,63 @@ function renderAll(YEARS) {
   });
 
   /* ── FUNCIONES DE NAVEGACIÓN ── */
-  function updateVisible(idx) {
-    document.querySelectorAll('.seg').forEach((s, i) => {
-      /* Activo a la izquierda + solo 1 círculo a la derecha */
-      s.classList.toggle('hidden', i < idx || i > idx + 1);
+
+  /* Ancho del segmento colapsado (espejo del clamp CSS) */
+  function getSegW() {
+    return Math.max(64, Math.min(200, window.innerWidth * 0.10));
+  }
+
+  /* Posiciona todos los segmentos como cámara sobre un strip largo.
+     El segmento activo siempre arranca en x=0 y ocupa (W - SW) o W si es el último.
+     Los demás quedan fuera del viewport (izquierda o derecha). */
+  function layoutSegs(idx, animate) {
+    const segs = [...document.querySelectorAll('.seg')];
+    const W    = segsEl.offsetWidth;
+    const SW   = getSegW();
+    const hasNext = idx < segs.length - 1;
+    const AW   = hasNext ? W - SW : W;   /* ancho del segmento activo */
+
+    if (!animate) {
+      segs.forEach(s => { s.style.transition = 'none'; });
+    }
+    segs.forEach((s, i) => {
+      if (i === idx) {
+        s.style.width     = AW + 'px';
+        s.style.transform = 'translateX(0)';
+      } else if (i === idx + 1) {
+        s.style.width     = SW + 'px';
+        s.style.transform = `translateX(${AW}px)`;
+      } else if (i < idx) {
+        s.style.width     = SW + 'px';
+        s.style.transform = `translateX(${-SW}px)`;  /* fuera por la izquierda */
+      } else {
+        s.style.width     = SW + 'px';
+        s.style.transform = `translateX(${W}px)`;    /* fuera por la derecha */
+      }
     });
+    if (!animate) {
+      requestAnimationFrame(() => {
+        segs.forEach(s => { s.style.transition = ''; });
+      });
+    }
   }
 
   function aActivate(idx) {
     if (idx === aActive) return;
-    const isBack  = idx < aActive;
-    const SEG_W   = getSegW();
-
-    /* ── Animación tipo "cámara": el contenedor entra desde un lado ── */
-    /* 1. Colocar el strip desplazado en la dirección opuesta (sin transición) */
-    segsEl.style.transition = 'none';
-    segsEl.style.transform  = `translateX(${isBack ? SEG_W : -SEG_W}px)`;
-
-    /* 2. Actualizar estado activo e visibilidad inmediatamente */
     aActive = idx;
     document.querySelectorAll('.seg').forEach((s,i) => s.classList.toggle('active', i===idx));
-    updateVisible(idx);
+    layoutSegs(idx, true);
     posAccent(idx);
-
-    /* 3. Disparar la animación al reposo (translateX → 0) */
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      segsEl.style.transition = 'transform 0.38s cubic-bezier(0.4,0,0.2,1)';
-      segsEl.style.transform  = '';
-      segsEl.addEventListener('transitionend', () => {
-        segsEl.style.transition = '';
-      }, { once: true });
-    }));
   }
 
-  function getSegW() {
-    const s = document.querySelector('.seg:not(.active)');
-    return s ? s.getBoundingClientRect().width : 86;
-  }
   function posAccent(idx) {
-    const SEG_W     = getSegW();
-    const segsArr   = [...document.querySelectorAll('.seg')];
-    const visArr    = segsArr.filter(s => !s.classList.contains('hidden'));
-    const W         = segsEl.offsetWidth;
-    const expW      = W - (visArr.length - 1) * SEG_W;
-    const beforeVis = visArr.findIndex(s => +s.dataset.yi === idx);
-    const leftX     = beforeVis * SEG_W + SEG_W / 2;
-    tlAccent.style.left  = leftX + 'px';
-    tlAccent.style.width = expW  + 'px';
+    const W    = segsEl.offsetWidth;
+    const SW   = getSegW();
+    const segs = document.querySelectorAll('.seg');
+    const AW   = idx < segs.length - 1 ? W - SW : W;
+    tlAccent.style.left  = '0px';
+    tlAccent.style.width = AW + 'px';
   }
-  window.addEventListener('resize', () => posAccent(aActive));
 
   segsEl.addEventListener('click', e => {
     const s = e.target.closest('.seg');
@@ -845,6 +847,7 @@ function renderAll(YEARS) {
       setViewBtn('accordion');
       hint.textContent = 'Clic en un año para desplegar · ← → teclado';
       if (fActive !== aActive) aActivate(fActive);
+      layoutSegs(aActive, false);
       posAccent(aActive);
     }
   });
@@ -886,10 +889,10 @@ function renderAll(YEARS) {
 
   /* ── INIT ── */
   setViewBtn('accordion');
-  updateVisible(0);
+  layoutSegs(0, false);
   posAccent(0);
   updateFcProg();
-  window.addEventListener('resize', () => { posAccent(aActive); updateFcProg(); });
+  window.addEventListener('resize', () => { layoutSegs(aActive, false); posAccent(aActive); updateFcProg(); });
 }
 
 /* ══════════════════════════════════════════
