@@ -373,7 +373,7 @@ html.dark #loading {
 .legend { display:flex; gap:16px; }
 .li     { display:flex; align-items:center; gap:6px; font-size:clamp(7px,.875vw,20px); color:var(--g60); letter-spacing:.04em; font-weight:500; }
 .lsw    { width:9px; height:9px; flex-shrink:0; }
-.hint   { font-size:clamp(7px,.875vw,20px); color:var(--g40); letter-spacing:.06em; }
+.hint   { font-size:clamp(7px,.875vw,20px); color:var(--fg); letter-spacing:.06em; font-weight:500; }
 
 @media (prefers-reduced-motion:reduce) {
   .circle-inner.current, .fc-circ.current, .tag-urg { animation:none; }
@@ -724,7 +724,7 @@ function renderAll(YEARS) {
   /* ── FUNCIONES DE NAVEGACIÓN ── */
   function updateVisible(idx) {
     document.querySelectorAll('.seg').forEach((s, i) => {
-      s.classList.toggle('hidden', i < idx - 2 || i > idx + 1);
+      s.classList.toggle('hidden', i < idx - 1 || i > idx + 1);
     });
   }
 
@@ -769,7 +769,13 @@ function renderAll(YEARS) {
 
   segsEl.addEventListener('click', e => {
     const s = e.target.closest('.seg');
-    if (s) aActivate(+s.dataset.yi);
+    if (!s) return;
+    const clickedIdx = +s.dataset.yi;
+    if (clickedIdx === aActive) return;
+    /* Círculo izquierdo → retroceder 1; círculo derecho → avanzar 1 */
+    aActivate(clickedIdx < aActive
+      ? Math.max(aActive - 1, 0)
+      : Math.min(aActive + 1, YEARS.length - 1));
   });
 
   function fActivate(idx) {
