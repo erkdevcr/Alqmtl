@@ -63,6 +63,9 @@ html, body {
   gap:16px; z-index:999;
   transition: opacity .4s ease;
 }
+html.dark #loading {
+  background: linear-gradient(rgb(0,0,0) 0%, rgb(26,32,40) 50%, rgb(41,56,69) 100%);
+}
 #loading.fade-out { opacity:0; pointer-events:none; }
 .loading-dot-row { display:flex; gap:8px; }
 .loading-dot {
