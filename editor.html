@@ -558,11 +558,13 @@ function renderYears() {
    DRAG & DROP — hitos sin fecha
 ══════════════════════════════════════════ */
 function setupCardDrag(card, launchId, yearId) {
-  const handle = card.querySelector('.drag-handle');
-  if (!handle) return;
+  if (!card.querySelector('.drag-handle')) return;
+  /* Escuchar en toda la card-header; ignorar clics en botones/inputs */
+  const header = card.querySelector('.card-header');
 
-  handle.addEventListener('pointerdown', e => {
+  header.addEventListener('pointerdown', e => {
     if (e.button !== undefined && e.button !== 0) return;
+    if (e.target.closest('button, input, select, textarea, a')) return;
     const startX = e.clientX;
     const startY = e.clientY;
     const THRESHOLD = 8;      /* px mínimos para considerar drag */
@@ -576,25 +578,29 @@ function setupCardDrag(card, launchId, yearId) {
       if (!dragging) {
         if (Math.abs(dx) < THRESHOLD && Math.abs(dy) < THRESHOLD) return;
         dragging = true;
-        handle.setPointerCapture(e.pointerId);
+        header.setPointerCapture(e.pointerId);
         card.classList.add('dragging');
       }
 
       ev.preventDefault();
       const container = card.parentNode;
 
-      /* Detectar card destino por geometría (sin ocultar nada) */
-      const siblings = [...container.querySelectorAll('.card[data-launch-id]')]
-        .filter(c => c !== card);
+      /* Solo cards sin fecha (tienen drag-handle) — no cruzar hacia las fechadas */
+      const undatedSiblings = [...container.querySelectorAll('.card[data-launch-id]')]
+        .filter(c => c !== card && c.querySelector('.drag-handle'));
+
+      if (!undatedSiblings.length) return;
+
       let target = null;
-      for (const c of siblings) {
+      for (const c of undatedSiblings) {
         const r = c.getBoundingClientRect();
         if (ev.clientY >= r.top && ev.clientY <= r.bottom) { target = c; break; }
       }
       if (!target) {
-        /* por encima del primero o por debajo del último */
-        const first = siblings[0], last = siblings[siblings.length - 1];
-        if (first && ev.clientY < first.getBoundingClientRect().top)
+        const first = undatedSiblings[0];
+        const last  = undatedSiblings[undatedSiblings.length - 1];
+        /* Tope superior: no puede pasar por encima del primero sin fecha */
+        if (ev.clientY < first.getBoundingClientRect().top)
           container.insertBefore(card, first);
         else if (last && ev.clientY > last.getBoundingClientRect().bottom)
           container.appendChild(card);
