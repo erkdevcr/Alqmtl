@@ -6,7 +6,18 @@
 <meta name="theme-color" id="metaTheme" content="#ffffff">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <!-- Aplicar tema ANTES de pintar para evitar flash blanco -->
-<script>if(localStorage.getItem('alq-theme')==='dark'){document.documentElement.classList.add('dark');document.querySelector('#metaTheme')&&(document.querySelector('#metaTheme').content='#111c26');}</script>
+<script>
+if(localStorage.getItem('alq-theme')==='dark'){document.documentElement.classList.add('dark');document.querySelector('#metaTheme')&&(document.querySelector('#metaTheme').content='#111c26');}
+(function(){
+  var ls=localStorage, cn=ls.getItem('tl_col_new'), cu=ls.getItem('tl_col_upd'), cg=ls.getItem('tl_col_urg');
+  if(cn||cu||cg){
+    var css=(cn?'.tag-new{background:'+cn+' !important;color:#fff !important}':'')+
+            (cu?'.tag-upd{background:'+cu+' !important;border:none !important;color:#fff !important}':'')+
+            (cg?'.tag-urg{background:'+cg+' !important}':'');
+    var s=document.createElement('style'); s.textContent=css; document.head.appendChild(s);
+  }
+})();
+</script>
 <title>Línea del Tiempo 2026–2030 — Quinquenio Joyas</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23000'/%3E%3Cpath d='M10 4h12v1l-5 7-1 1-1-1-5-7V4zm0 24h12v-1l-5-7-1-1-1 1-5 7v1zm1-1h10l-4-5.5-.5-.7-.5.7L11 27zm1-22l4 5.5.5.7.5-.7L21 5H11z' fill='%23fff'/%3E%3Crect x='9' y='4' width='14' height='1.5' fill='%23fff'/%3E%3Crect x='9' y='26.5' width='14' height='1.5' fill='%23fff'/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -493,17 +504,19 @@ html.dark #loading {
 <script>
 (function(){
   var ls = localStorage;
-  var badge   = ls.getItem('tl_badge');
-  var legNew  = ls.getItem('tl_leg_new');
-  var legUpd  = ls.getItem('tl_leg_upd');
-  var legUrg  = ls.getItem('tl_leg_urg');
-  var colNew  = ls.getItem('tl_col_new');
-  var colUpd  = ls.getItem('tl_col_upd');
-  var colUrg  = ls.getItem('tl_col_urg');
-  if(badge)  document.getElementById('tl-badge').textContent    = badge;
-  if(legNew) document.getElementById('tl-leg-new').textContent  = legNew;
-  if(legUpd) document.getElementById('tl-leg-upd').textContent  = legUpd;
-  if(legUrg) document.getElementById('tl-leg-urg').textContent  = legUrg;
+  /* badge */
+  var badge = ls.getItem('tl_badge');
+  if(badge) document.getElementById('tl-badge').textContent = badge;
+  /* footer legend: nombre corto + descripción */
+  function legText(key){ return ls.getItem('tl_tag_'+key+'_name')||{new:'NEW',upd:'UPD',urg:'URG'}[key]; }
+  function legDesc(key){ return ls.getItem('tl_tag_'+key+'_desc'); }
+  ['new','upd','urg'].forEach(function(k){
+    var name=legText(k), desc=legDesc(k);
+    var el=document.getElementById('tl-leg-'+k);
+    if(el) el.textContent = desc ? name+' — '+desc : name;
+  });
+  /* colores bolitas del footer */
+  var colNew=ls.getItem('tl_col_new'), colUpd=ls.getItem('tl_col_upd'), colUrg=ls.getItem('tl_col_urg');
   if(colNew) document.getElementById('tl-lsw-new').style.background = colNew;
   if(colUpd){ var u=document.getElementById('tl-lsw-upd'); u.style.background=colUpd; u.style.border='none'; }
   if(colUrg) document.getElementById('tl-lsw-urg').style.background = colUrg;
@@ -547,12 +560,16 @@ const supa = (path) => fetch(`${SUPA_URL}/rest/v1/${path}`, {
 }).then(r => r.json());
 
 /* ── helpers ── */
-const TM  = { new:'NEW', upd:'UPD', urg:'URG' };
+const TM  = {
+  new: localStorage.getItem('tl_tag_new_name') || 'NEW',
+  upd: localStorage.getItem('tl_tag_upd_name') || 'UPD',
+  urg: localStorage.getItem('tl_tag_urg_name') || 'URG'
+};
 
 
 /* Construye el tag combinando status_tag + is_urgent */
 function buildTag(row) {
-  if (row.is_urgent) return `<span class="tag tag-urg">URG</span>`;
+  if (row.is_urgent) return `<span class="tag tag-urg">${TM.urg}</span>`;
   if (row.status_tag) return `<span class="tag tag-${row.status_tag}">${TM[row.status_tag]}</span>`;
   return '';
 }
@@ -670,7 +687,7 @@ function renderAll(YEARS) {
       const x     = ((i + 0.5) / N * 100).toFixed(3);
       const above = i % 2 === 0;
       const tagHtml = l.urg
-        ? `<span class="tag tag-urg">URG</span>`
+        ? `<span class="tag tag-urg">${TM.urg}</span>`
         : (l.tag ? `<span class="tag tag-${l.tag}">${TM[l.tag]}</span>` : '');
 
       /* fecha y items separados */
@@ -737,7 +754,7 @@ function renderAll(YEARS) {
 
     const cardRow = arr => arr.map(l => {
       const tagHtml = l.urg
-        ? `<span class="tag tag-urg">URG</span>`
+        ? `<span class="tag tag-urg">${TM.urg}</span>`
         : (l.tag ? `<span class="tag tag-${l.tag}">${TM[l.tag]}</span>` : '');
       return `
         <div class="fc-card">

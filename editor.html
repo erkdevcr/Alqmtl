@@ -307,28 +307,38 @@ input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--fg
       </div>
 
       <div class="add-title" style="margin-top:20px;">Nomenclatura del footer</div>
+      <p style="font-size:11px;color:var(--g60);margin-bottom:12px;line-height:1.5;">
+        El <strong>nombre</strong> aparece en los badges de los hitos. La <strong>descripción</strong> se muestra en el footer.
+      </p>
       <div class="form-grid" style="grid-template-columns:1fr;">
+
         <div class="form-group">
-          <label>Etiqueta NEW</label>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <input type="text" id="cfg-leg-new" placeholder="Ej: NEW — Nuevo vs. plan original" style="flex:1;min-width:0;">
-            <input type="color" id="cfg-col-new" title="Color de la bolita NEW" style="width:38px;height:34px;padding:2px 3px;border-radius:6px;cursor:pointer;flex-shrink:0;">
+          <label>Tag 1</label>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input type="color" id="cfg-col-new" title="Color" style="width:38px;height:34px;padding:2px 3px;border-radius:6px;cursor:pointer;flex-shrink:0;">
+            <input type="text" id="cfg-tag-new-name" placeholder="Nombre (ej: NEW)" style="width:100px;flex-shrink:0;">
+            <input type="text" id="cfg-tag-new-desc" placeholder="Descripción en footer" style="flex:1;min-width:0;">
           </div>
         </div>
+
         <div class="form-group">
-          <label>Etiqueta UPD</label>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <input type="text" id="cfg-leg-upd" placeholder="Ej: UPD — Detalle actualizado" style="flex:1;min-width:0;">
-            <input type="color" id="cfg-col-upd" title="Color de la bolita UPD" style="width:38px;height:34px;padding:2px 3px;border-radius:6px;cursor:pointer;flex-shrink:0;">
+          <label>Tag 2</label>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input type="color" id="cfg-col-upd" title="Color" style="width:38px;height:34px;padding:2px 3px;border-radius:6px;cursor:pointer;flex-shrink:0;">
+            <input type="text" id="cfg-tag-upd-name" placeholder="Nombre (ej: UPD)" style="width:100px;flex-shrink:0;">
+            <input type="text" id="cfg-tag-upd-desc" placeholder="Descripción en footer" style="flex:1;min-width:0;">
           </div>
         </div>
+
         <div class="form-group">
-          <label>Etiqueta URG</label>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <input type="text" id="cfg-leg-urg" placeholder="Ej: URG — Urgente en board" style="flex:1;min-width:0;">
-            <input type="color" id="cfg-col-urg" title="Color de la bolita URG" style="width:38px;height:34px;padding:2px 3px;border-radius:6px;cursor:pointer;flex-shrink:0;">
+          <label>Tag 3</label>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input type="color" id="cfg-col-urg" title="Color" style="width:38px;height:34px;padding:2px 3px;border-radius:6px;cursor:pointer;flex-shrink:0;">
+            <input type="text" id="cfg-tag-urg-name" placeholder="Nombre (ej: URG)" style="width:100px;flex-shrink:0;">
+            <input type="text" id="cfg-tag-urg-desc" placeholder="Descripción en footer" style="flex:1;min-width:0;">
           </div>
         </div>
+
       </div>
 
       <div style="display:flex;gap:8px;margin-top:16px;">
@@ -1032,29 +1042,35 @@ document.getElementById('search-launch').addEventListener('input', () => {
 ══════════════════════════════════════════ */
 (function initConfig() {
   const ls = localStorage;
-  document.getElementById('cfg-title1').value   = ls.getItem('tl_title1')  || 'Línea del Tiempo';
-  document.getElementById('cfg-title2').value   = ls.getItem('tl_title2')  || 'Quinquenio Joyas';
-  document.getElementById('cfg-badge').value    = ls.getItem('tl_badge')   || 'Actualizada Mar 2026 · Fuente: Board Lanzamientos KL';
-  document.getElementById('cfg-leg-new').value  = ls.getItem('tl_leg_new') || 'NEW — Nuevo vs. plan original';
-  document.getElementById('cfg-leg-upd').value  = ls.getItem('tl_leg_upd') || 'UPD — Detalle actualizado';
-  document.getElementById('cfg-leg-urg').value  = ls.getItem('tl_leg_urg') || 'URG — Urgente en board';
-  /* colores — defaults: NEW=#111111, UPD=#888888, URG=#cc2200 */
-  document.getElementById('cfg-col-new').value  = ls.getItem('tl_col_new') || '#111111';
-  document.getElementById('cfg-col-upd').value  = ls.getItem('tl_col_upd') || '#888888';
-  document.getElementById('cfg-col-urg').value  = ls.getItem('tl_col_urg') || '#cc2200';
+  document.getElementById('cfg-title1').value        = ls.getItem('tl_title1')        || 'Línea del Tiempo';
+  document.getElementById('cfg-title2').value        = ls.getItem('tl_title2')        || 'Quinquenio Joyas';
+  document.getElementById('cfg-badge').value         = ls.getItem('tl_badge')         || 'Actualizada Mar 2026 · Fuente: Board Lanzamientos KL';
+  /* tags: nombre + descripción + color */
+  document.getElementById('cfg-tag-new-name').value  = ls.getItem('tl_tag_new_name')  || 'NEW';
+  document.getElementById('cfg-tag-new-desc').value  = ls.getItem('tl_tag_new_desc')  || 'Nuevo vs. plan original';
+  document.getElementById('cfg-tag-upd-name').value  = ls.getItem('tl_tag_upd_name')  || 'UPD';
+  document.getElementById('cfg-tag-upd-desc').value  = ls.getItem('tl_tag_upd_desc')  || 'Detalle actualizado';
+  document.getElementById('cfg-tag-urg-name').value  = ls.getItem('tl_tag_urg_name')  || 'URG';
+  document.getElementById('cfg-tag-urg-desc').value  = ls.getItem('tl_tag_urg_desc')  || 'Urgente en board';
+  document.getElementById('cfg-col-new').value       = ls.getItem('tl_col_new')       || '#111111';
+  document.getElementById('cfg-col-upd').value       = ls.getItem('tl_col_upd')       || '#888888';
+  document.getElementById('cfg-col-urg').value       = ls.getItem('tl_col_urg')       || '#cc2200';
 })();
 
 document.getElementById('btn-save-config').addEventListener('click', () => {
   const ls = localStorage;
-  ls.setItem('tl_title1',  document.getElementById('cfg-title1').value.trim()  || 'Línea del Tiempo');
-  ls.setItem('tl_title2',  document.getElementById('cfg-title2').value.trim()  || 'Quinquenio Joyas');
-  ls.setItem('tl_badge',   document.getElementById('cfg-badge').value.trim()   || 'Actualizada Mar 2026 · Fuente: Board Lanzamientos KL');
-  ls.setItem('tl_leg_new', document.getElementById('cfg-leg-new').value.trim() || 'NEW — Nuevo vs. plan original');
-  ls.setItem('tl_leg_upd', document.getElementById('cfg-leg-upd').value.trim() || 'UPD — Detalle actualizado');
-  ls.setItem('tl_leg_urg', document.getElementById('cfg-leg-urg').value.trim() || 'URG — Urgente en board');
-  ls.setItem('tl_col_new', document.getElementById('cfg-col-new').value);
-  ls.setItem('tl_col_upd', document.getElementById('cfg-col-upd').value);
-  ls.setItem('tl_col_urg', document.getElementById('cfg-col-urg').value);
+  ls.setItem('tl_title1',       document.getElementById('cfg-title1').value.trim()       || 'Línea del Tiempo');
+  ls.setItem('tl_title2',       document.getElementById('cfg-title2').value.trim()       || 'Quinquenio Joyas');
+  ls.setItem('tl_badge',        document.getElementById('cfg-badge').value.trim()        || 'Actualizada Mar 2026 · Fuente: Board Lanzamientos KL');
+  ls.setItem('tl_tag_new_name', document.getElementById('cfg-tag-new-name').value.trim() || 'NEW');
+  ls.setItem('tl_tag_new_desc', document.getElementById('cfg-tag-new-desc').value.trim() || 'Nuevo vs. plan original');
+  ls.setItem('tl_tag_upd_name', document.getElementById('cfg-tag-upd-name').value.trim() || 'UPD');
+  ls.setItem('tl_tag_upd_desc', document.getElementById('cfg-tag-upd-desc').value.trim() || 'Detalle actualizado');
+  ls.setItem('tl_tag_urg_name', document.getElementById('cfg-tag-urg-name').value.trim() || 'URG');
+  ls.setItem('tl_tag_urg_desc', document.getElementById('cfg-tag-urg-desc').value.trim() || 'Urgente en board');
+  ls.setItem('tl_col_new',      document.getElementById('cfg-col-new').value);
+  ls.setItem('tl_col_upd',      document.getElementById('cfg-col-upd').value);
+  ls.setItem('tl_col_urg',      document.getElementById('cfg-col-urg').value);
   toast('Configuración guardada ✓');
 });
 
