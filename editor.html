@@ -318,10 +318,11 @@ function toast(msg) {
 /* ══════════════════════════════════════════
    SAVE BAR
 ══════════════════════════════════════════ */
-async function saveField(table, id, changes) {
+async function saveField(table, id, changes, onSuccess) {
   try {
     await api.patch(table, id, changes);
     toast('Guardado ✓');
+    if (onSuccess) onSuccess();
   } catch(err) {
     toast('Error al guardar');
     console.error(err);
@@ -534,10 +535,25 @@ function renderLaunches(filterYearId = '', searchText = '') {
       else val = inp.value || null;
 
       /* URG se maneja como is_urgent=true + status_tag=null */
-      if (inp.dataset.field === 'status_tag' && val === 'urg') {
-        saveField(inp.dataset.table, inp.dataset.id, { is_urgent: true, status_tag: null });
-      } else if (inp.dataset.field === 'status_tag') {
-        saveField(inp.dataset.table, inp.dataset.id, { is_urgent: false, status_tag: val });
+      if (inp.dataset.field === 'status_tag') {
+        const isUrg = val === 'urg';
+        const changes = isUrg
+          ? { is_urgent: true,  status_tag: null }
+          : { is_urgent: false, status_tag: val  };
+
+        /* actualizar badge en header de la card inmediatamente */
+        const card    = inp.closest('.card');
+        const titleEl = card ? card.querySelector('.card-title') : null;
+        if (titleEl) {
+          /* quitar badge anterior */
+          titleEl.querySelectorAll('.badge').forEach(b => b.remove());
+          /* insertar nuevo */
+          const fakeRow = { is_urgent: isUrg, status_tag: isUrg ? null : val };
+          const badge   = tagBadge(fakeRow);
+          if (badge) titleEl.insertAdjacentHTML('beforeend', badge);
+        }
+
+        saveField(inp.dataset.table, inp.dataset.id, changes);
       } else {
         saveField(inp.dataset.table, inp.dataset.id, { [inp.dataset.field]: val });
       }
