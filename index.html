@@ -181,15 +181,16 @@ html.dark #loading {
   transition: transform .48s cubic-bezier(.4,0,.2,1),
               width     .48s cubic-bezier(.4,0,.2,1);
 }
-.seg:not(.active)    { cursor:pointer; }
-.seg:not(.active):hover .circle-inner { transform:scale(1.07); }
+.seg { pointer-events:none; }   /* el seg completo no captura clics */
 
 .circle-wrap {
   position:absolute; left:0; width:var(--seg-w);
   top:50%; transform:translateY(-50%);
   display:flex; justify-content:center; align-items:center;
-  z-index:12; pointer-events:none;
+  z-index:12; pointer-events:auto; cursor:pointer; /* solo el círculo es clicable */
 }
+.circle-wrap:hover .circle-inner { transform:scale(1.07); }
+.seg.active .circle-wrap { cursor:pointer; }
 .circle-inner {
   width:var(--cd); height:var(--cd); border-radius:50%;
   background:var(--fg); color:var(--bg);
@@ -773,23 +774,29 @@ function renderAll(YEARS) {
   }
 
   function posAccent(idx) {
-    const W    = segsEl.offsetWidth;
-    const SW   = getSegW();
-    const segs = document.querySelectorAll('.seg');
-    const AW   = idx < segs.length - 1 ? W - SW : W;
-    tlAccent.style.left  = '0px';
-    tlAccent.style.width = AW + 'px';
+    const W       = segsEl.offsetWidth;
+    const SW      = getSegW();
+    const segs    = document.querySelectorAll('.seg');
+    const hasNext = idx < segs.length - 1;
+    const AW      = hasNext ? W - SW : W;
+    /* segsEl está desplazado del borde de tl-wrap por el padding — hay que sumarlo */
+    const pad     = segsEl.offsetLeft;
+    const x0 = pad + SW / 2;
+    const x1 = hasNext ? pad + AW + SW / 2 : pad + AW;
+    tlAccent.style.left  = x0 + 'px';
+    tlAccent.style.width = (x1 - x0) + 'px';
   }
 
   segsEl.addEventListener('click', e => {
-    const s = e.target.closest('.seg');
+    /* Solo responder a clics directamente en el circle-wrap o circle-inner */
+    const cw = e.target.closest('.circle-wrap');
+    if (!cw) return;
+    const s = cw.closest('.seg');
     if (!s) return;
     const clickedIdx = +s.dataset.yi;
     if (clickedIdx === aActive) {
-      /* Tocar el año activo = retroceder */
       if (aActive > 0) aActivate(aActive - 1);
     } else {
-      /* Tocar el círculo de la derecha = avanzar */
       aActivate(Math.min(aActive + 1, YEARS.length - 1));
     }
   });
