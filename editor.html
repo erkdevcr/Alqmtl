@@ -768,9 +768,10 @@ function renderLaunches(filterYearId = '', searchText = '') {
   data.forEach(l => {
     const y    = years.find(y => y.id === l.year_id);
 
-    /* Meta: solo fecha — el tag ya aparece junto al nombre */
-    const datePart = l.launch_date ? `<strong>${fmtDate(l.launch_date)}</strong>` : '';
-    const metaHtml = datePart;
+    /* Meta: items + mes */
+    const itemsPart = l.item_count ? `${l.item_count} items` : '';
+    const datePart  = l.launch_date ? `<strong>${fmtDate(l.launch_date)}</strong>` : '';
+    const metaHtml  = [itemsPart, datePart].filter(Boolean).join(' · ');
 
     /* Drag handle solo si hay filtro de año activo y el hito no tiene fecha */
     const dragHandle = (filterYearId && !l.launch_date) ? `
