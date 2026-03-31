@@ -221,6 +221,7 @@ input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--fg
   <div class="tabs">
     <div class="tab active" data-tab="years">Años</div>
     <div class="tab" data-tab="launches">Hitos</div>
+    <div class="tab" data-tab="config">Configuración</div>
   </div>
 
   <!-- TAB: AÑOS -->
@@ -276,6 +277,30 @@ input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--fg
     </div>
 
     <div id="years-list"><div class="loading">Cargando...</div></div>
+  </div>
+
+  <!-- TAB: CONFIGURACIÓN -->
+  <div id="tab-config" style="display:none">
+    <div style="margin-bottom:16px;" class="section-label">Configuración general</div>
+    <div class="add-section open">
+      <div class="add-title">Título del Timeline</div>
+      <p style="font-size:11px;color:var(--g60);margin-bottom:14px;line-height:1.5;">
+        El título se muestra en dos líneas en el header de la página principal.
+      </p>
+      <div class="form-grid" style="grid-template-columns:1fr;">
+        <div class="form-group">
+          <label>Línea 1 (texto principal)</label>
+          <input type="text" id="cfg-title1" placeholder="Ej: Línea del Tiempo">
+        </div>
+        <div class="form-group">
+          <label>Línea 2 (subtítulo)</label>
+          <input type="text" id="cfg-title2" placeholder="Ej: Quinquenio Joyas">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px;">
+        <button class="btn btn-accent" id="btn-save-config">Guardar título</button>
+      </div>
+    </div>
   </div>
 
   <!-- TAB: HITOS -->
@@ -958,6 +983,7 @@ document.querySelectorAll('.tab').forEach(tab => {
     tab.classList.add('active');
     document.getElementById('tab-years').style.display    = tab.dataset.tab === 'years'   ? '' : 'none';
     document.getElementById('tab-launches').style.display = tab.dataset.tab === 'launches' ? '' : 'none';
+    document.getElementById('tab-config').style.display   = tab.dataset.tab === 'config'   ? '' : 'none';
   });
 });
 
@@ -965,6 +991,24 @@ document.querySelectorAll('.tab').forEach(tab => {
 document.getElementById('search-launch').addEventListener('input', () => {
   const activeYr = document.querySelector('#year-bar .ypill.active')?.dataset.id ?? '';
   renderLaunches(activeYr, document.getElementById('search-launch').value);
+});
+
+/* ══════════════════════════════════════════
+   CONFIGURACIÓN — título
+══════════════════════════════════════════ */
+(function initConfig() {
+  const i1 = document.getElementById('cfg-title1');
+  const i2 = document.getElementById('cfg-title2');
+  i1.value = localStorage.getItem('tl_title1') || 'Línea del Tiempo';
+  i2.value = localStorage.getItem('tl_title2') || 'Quinquenio Joyas';
+})();
+
+document.getElementById('btn-save-config').addEventListener('click', () => {
+  const t1 = document.getElementById('cfg-title1').value.trim() || 'Línea del Tiempo';
+  const t2 = document.getElementById('cfg-title2').value.trim() || 'Quinquenio Joyas';
+  localStorage.setItem('tl_title1', t1);
+  localStorage.setItem('tl_title2', t2);
+  toast('Título guardado ✓');
 });
 
 /* ══════════════════════════════════════════

@@ -415,7 +415,17 @@ html.dark #loading {
 <!-- ══════ HEADER ══════ -->
 <header class="header">
   <div class="title-group">
-    <h1>Línea del Tiempo<span>Quinquenio Joyas</span></h1>
+    <h1 id="tl-main-title">Línea del Tiempo<span id="tl-sub-title">Quinquenio Joyas</span></h1>
+    <script>
+      (function(){
+        var t1 = localStorage.getItem('tl_title1');
+        var t2 = localStorage.getItem('tl_title2');
+        var h  = document.getElementById('tl-main-title');
+        var sp = document.getElementById('tl-sub-title');
+        if(t1){ h.childNodes[0].textContent = t1; }
+        if(t2){ sp.textContent = t2; }
+      })();
+    </script>
     <div class="hd"></div>
     <div class="yr">2026–2030</div>
   </div>
