@@ -821,7 +821,59 @@ async function loadData() {
 let _aActive = parseInt(localStorage.getItem('tl_yr_a') || '0', 10);
 let _fActive = parseInt(localStorage.getItem('tl_yr_f') || '0', 10);
 let _curV    = localStorage.getItem('tl_view') || 'accordion';
-let _hitoData = [];   /* datos de hitos para popup — se reconstruye en cada renderAll */
+let _hitoData   = [];   /* datos de hitos para popup — se reconstruye en cada renderAll */
+let _activeHito = null;
+
+/* ── Popup helpers (module-scope para ser accesibles desde renderAll) ── */
+function showHitoPopup(hito, clickY) {
+  const popup = document.getElementById('hito-popup');
+  if (!popup) return;
+  const d = _hitoData[parseInt(hito.dataset.hi, 10)];
+  if (!d) return;
+
+  const tagHtml = d.urg
+    ? `<span class="tag tag-urg">${TM.urg}</span>`
+    : (d.tag ? `<span class="tag tag-${d.tag}">${TM[d.tag]}</span>` : '');
+
+  const subParts = [];
+  if (d.items) subParts.push(`${d.items} items`);
+  if (d.date)  subParts.push(d.date);
+
+  popup.innerHTML =
+    (tagHtml ? `<div class="hp-tag">${tagHtml}</div>` : '') +
+    `<div class="hp-name">${d.n}</div>` +
+    (d.d ? `<div class="hp-det">${d.d}</div>` : '') +
+    (subParts.length ? `<div class="hp-sub">${subParts.join(' · ')}</div>` : '');
+
+  const isBelow = !!hito.closest('.row-below');
+  popup.style.display = 'block';
+  popup.classList.remove('hp-vis', 'hp-down');
+  const rect = hito.getBoundingClientRect();
+  const pw   = 240;
+  let left   = rect.left + rect.width / 2 - pw / 2;
+  left = Math.max(8, Math.min(left, window.innerWidth - pw - 8));
+  popup.style.left = left + 'px';
+
+  if (isBelow) {
+    popup.classList.add('hp-down');
+    popup.style.top    = (clickY + 10) + 'px';
+    popup.style.bottom = 'auto';
+  } else {
+    popup.style.bottom = (window.innerHeight - clickY + 10) + 'px';
+    popup.style.top    = 'auto';
+  }
+  popup.offsetHeight;               /* forzar reflow para que la transición se dispare */
+  popup.classList.add('hp-vis');
+  _activeHito = hito;
+}
+
+function hideHitoPopup() {
+  const popup = document.getElementById('hito-popup');
+  if (!popup) return;
+  popup.classList.remove('hp-vis');
+  setTimeout(() => { if (!popup.classList.contains('hp-vis')) popup.style.display = 'none'; }, 260);
+  _activeHito = null;
+}
 let _dataFP   = '';   /* fingerprint para detectar cambios cross-device */
 
 /* ══════════════════════════════════════════
@@ -1221,6 +1273,24 @@ function renderAll(YEARS) {
   posAccent(aActive);
   updateFcProg();
   window.addEventListener('resize', () => { layoutSegs(aActive, false); posAccent(aActive); updateFcProg(); }, { signal });
+
+  /* ── Popup de hito (delegación en #segs, con AbortController) ── */
+  document.getElementById('segs').addEventListener('click', e => {
+    const hito = e.target.closest('.hito');
+    if (hito) {
+      e.stopPropagation();
+      if (hito === _activeHito) { hideHitoPopup(); return; }
+      showHitoPopup(hito, e.clientY);
+      return;
+    }
+    if (_activeHito) hideHitoPopup();
+  }, { signal });
+
+  /* Click fuera del popup lo cierra */
+  document.addEventListener('click', e => {
+    const popup = document.getElementById('hito-popup');
+    if (_activeHito && popup && !popup.contains(e.target)) hideHitoPopup();
+  }, { signal });
 }
 
 /* ══════════════════════════════════════════
@@ -1303,76 +1373,6 @@ function renderAll(YEARS) {
   }
   document.getElementById('fontMinus')?.addEventListener('click', () => setScale(_fontScale - SCALE_STEP));
   document.getElementById('fontPlus')?.addEventListener('click',  () => setScale(_fontScale + SCALE_STEP));
-
-  /* ── Popup de hito (timeline acordeón) ── */
-  const popup  = document.getElementById('hito-popup');
-  let   _activeHito = null;
-
-  function showHitoPopup(hito, clickY) {
-    const d = _hitoData[parseInt(hito.dataset.hi, 10)];
-    if (!d) return;
-
-    const tagHtml = d.urg
-      ? `<span class="tag tag-urg">${TM.urg}</span>`
-      : (d.tag ? `<span class="tag tag-${d.tag}">${TM[d.tag]}</span>` : '');
-
-    const subParts = [];
-    if (d.items) subParts.push(`${d.items} items`);
-    if (d.date)  subParts.push(d.date);
-
-    popup.innerHTML =
-      (tagHtml ? `<div class="hp-tag">${tagHtml}</div>` : '') +
-      `<div class="hp-name">${d.n}</div>` +
-      (d.d ? `<div class="hp-det">${d.d}</div>` : '') +
-      (subParts.length ? `<div class="hp-sub">${subParts.join(' · ')}</div>` : '');
-
-    const isBelow = !!hito.closest('.row-below');
-    popup.style.display = 'block';
-    popup.classList.remove('hp-vis', 'hp-down');
-    const rect = hito.getBoundingClientRect();
-    const pw   = 240;
-    let left   = rect.left + rect.width / 2 - pw / 2;
-    left = Math.max(8, Math.min(left, window.innerWidth - pw - 8));
-    popup.style.left = left + 'px';
-
-    if (isBelow) {
-      /* Hito de abajo → popup se despliega hacia abajo desde el punto de toque */
-      popup.classList.add('hp-down');
-      popup.style.top    = (clickY + 10) + 'px';
-      popup.style.bottom = 'auto';
-    } else {
-      /* Hito de arriba → popup se despliega hacia arriba desde el punto de toque */
-      popup.style.bottom = (window.innerHeight - clickY + 10) + 'px';
-      popup.style.top    = 'auto';
-    }
-    /* Forzar reflow para que la transición se dispare */
-    popup.offsetHeight;
-    popup.classList.add('hp-vis');
-    _activeHito = hito;
-  }
-
-  function hideHitoPopup() {
-    popup.classList.remove('hp-vis');
-    setTimeout(() => { if (!popup.classList.contains('hp-vis')) popup.style.display = 'none'; }, 260);
-    _activeHito = null;
-  }
-
-  /* Delegación en el contenedor de segmentos */
-  document.getElementById('segs').addEventListener('click', e => {
-    const hito = e.target.closest('.hito');
-    if (hito) {
-      e.stopPropagation();
-      if (hito === _activeHito) { hideHitoPopup(); return; }
-      showHitoPopup(hito, e.clientY);
-      return;
-    }
-    if (_activeHito) hideHitoPopup();
-  });
-
-  /* Click fuera cierra el popup */
-  document.addEventListener('click', e => {
-    if (_activeHito && !popup.contains(e.target)) hideHitoPopup();
-  });
 })();
 </script>
 
