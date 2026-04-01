@@ -423,10 +423,10 @@ html.dark #hito-popup { box-shadow:0 6px 28px rgba(0,0,0,.5); }
 .fc-nav button svg { width:13px; height:13px; }
 
 .fc-sec-lbl { font-size:clamp(7px,.875vw,20px); font-weight:700; letter-spacing:.25em; text-transform:uppercase; color:var(--g40); margin-bottom:5px; }
-.fc-cards   { display:flex; flex-wrap:wrap; gap:8px; }
+.fc-cards   { display:grid; grid-template-columns:repeat(auto-fill, minmax(max(148px, calc(20% - 6.4px)), 1fr)); gap:8px; }
 .fc-card    {
   border:1.5px solid var(--g20); padding:10px 13px;
-  min-width:148px; max-width:210px; flex:1 1 148px;
+  min-width:0;
   background:var(--bg);
   transition:border-color .2s, box-shadow .2s;
 }
