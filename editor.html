@@ -1159,7 +1159,7 @@ const MONTHS_EN = ['Jan','Feb','Mar','Apr','May','Jun',
 function buildBadgeText(source) {
   const now = new Date();
   const day = String(now.getDate()).padStart(2, '0');
-  const prefix = `Update ${day} ${MONTHS_EN[now.getMonth()]} ${now.getFullYear()}`;
+  const prefix = `Update: ${day} ${MONTHS_EN[now.getMonth()]} ${now.getFullYear()}`;
   return source ? `${prefix} · ${source}` : prefix;
 }
 
