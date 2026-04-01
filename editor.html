@@ -304,8 +304,8 @@ input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--fg
       <div class="add-title" style="margin-top:20px;">Badge de actualización</div>
       <div class="form-grid" style="grid-template-columns:1fr;">
         <div class="form-group">
-          <label>Texto del badge (header)</label>
-          <input type="text" id="cfg-badge" placeholder="Ej: Actualizada Mar 2026 · Fuente: Board KL">
+          <label>Source — el badge se genera automáticamente: "Update Month Year · [source]"</label>
+          <input type="text" id="cfg-badge" placeholder="Ej: Source: Board Lanzamientos KL">
         </div>
       </div>
 
@@ -562,6 +562,7 @@ async function saveField(table, id, changes, onSuccess) {
     await api.patch(table, id, changes);
     toast('Guardado ✓');
     tlChannel.postMessage({ type: 'data_changed' });
+    autoUpdateBadge();   /* actualiza "Update Month Year · Source" automáticamente */
     if (onSuccess) onSuccess();
   } catch(err) {
     toast('Error al guardar');
@@ -1151,10 +1152,38 @@ document.getElementById('search-launch').addEventListener('input', () => {
    CONFIGURACIÓN — título
 ══════════════════════════════════════════ */
 /* Defaults para no repetirlos */
+/* ── Badge auto-date helpers ── */
+const MONTHS_EN = ['Jan','Feb','Mar','Apr','May','Jun',
+                   'Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function buildBadgeText(source) {
+  const now = new Date();
+  const day = String(now.getDate()).padStart(2, '0');
+  const prefix = `Update ${day} ${MONTHS_EN[now.getMonth()]} ${now.getFullYear()}`;
+  return source ? `${prefix} · ${source}` : prefix;
+}
+
+/* Extrae la parte "source" del badge completo almacenado (todo lo que va después de " · ") */
+function badgeToSource(full) {
+  const idx = (full || '').indexOf(' · ');
+  return idx >= 0 ? full.slice(idx + 3) : (full || '');
+}
+
+/* Guarda badge auto-generado en DB + localStorage (fire-and-forget, sin toast) */
+async function autoUpdateBadge() {
+  const el  = document.getElementById('cfg-badge');
+  const src = el ? el.value.trim() : 'Source: Board Lanzamientos KL';
+  const badge = buildBadgeText(src);
+  try {
+    await api.upsert('timeline_config', { id: 1, badge });
+    localStorage.setItem('tl_badge', badge);
+  } catch(e) { /* silent — no bloquea la operación principal */ }
+}
+
 const CFG_DEFAULTS = {
   title1:       'Línea del Tiempo',
   title2:       'Quinquenio Joyas',
-  badge:        'Actualizada Mar 2026 · Fuente: Board Lanzamientos KL',
+  badge:        'Source: Monday Board',
   tag_new_name: 'NEW',  tag_new_desc: 'Nuevo vs. plan original',  tag_new_color: '#111111',
   tag_upd_name: 'UPD',  tag_upd_desc: 'Detalle actualizado',      tag_upd_color: '#888888',
   tag_urg_name: 'URG',  tag_urg_desc: 'Urgente en board',         tag_urg_color: '#cc2200'
@@ -1164,7 +1193,7 @@ function cfgToForm(c) {
   const s = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
   s('cfg-title1',        c.title1       || CFG_DEFAULTS.title1);
   s('cfg-title2',        c.title2       || CFG_DEFAULTS.title2);
-  s('cfg-badge',         c.badge        || CFG_DEFAULTS.badge);
+  s('cfg-badge',         badgeToSource(c.badge) || CFG_DEFAULTS.badge);
   s('cfg-tag-new-name',  c.tag_new_name || CFG_DEFAULTS.tag_new_name);
   s('cfg-tag-new-desc',  c.tag_new_desc || CFG_DEFAULTS.tag_new_desc);
   s('cfg-tag-upd-name',  c.tag_upd_name || CFG_DEFAULTS.tag_upd_name);
@@ -1232,7 +1261,7 @@ document.getElementById('btn-save-config').addEventListener('click', async () =>
     id:            1,
     title1:        g('cfg-title1')       || CFG_DEFAULTS.title1,
     title2:        g('cfg-title2')       || CFG_DEFAULTS.title2,
-    badge:         g('cfg-badge')        || CFG_DEFAULTS.badge,
+    badge:         buildBadgeText(g('cfg-badge') || CFG_DEFAULTS.badge),
     tag_new_name:  g('cfg-tag-new-name') || CFG_DEFAULTS.tag_new_name,
     tag_new_desc:  g('cfg-tag-new-desc') || CFG_DEFAULTS.tag_new_desc,
     tag_new_color: document.getElementById('cfg-col-new')?.value || CFG_DEFAULTS.tag_new_color,
