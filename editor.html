@@ -1342,6 +1342,27 @@ document.getElementById('btn-export-static').addEventListener('click', async () 
       if (fabClose !== -1) html = html.slice(0, fabIdx) + html.slice(fabClose + 4);
     }
 
+    /* 4b — Inyectar etiqueta "STATIC OFFLINE" debajo del badge */
+    html = html.replace(
+      'id="tl-badge"',
+      'id="tl-badge" style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;"'
+    );
+    /* Añadir el span STATIC OFFLINE como parte del interceptor: se inyecta vía script
+       en DOMContentLoaded para no depender del formato exacto del HTML */
+    const staticLabel = `<script id="__static_label__">
+(function(){
+  document.addEventListener('DOMContentLoaded', function(){
+    var b = document.getElementById('tl-badge');
+    if (!b) return;
+    var s = document.createElement('span');
+    s.textContent = 'STATIC OFFLINE';
+    s.style.cssText = 'font-size:.65em;letter-spacing:.12em;font-weight:600;color:#4a9eca;opacity:.85;line-height:1.2;';
+    b.appendChild(s);
+  });
+})();
+<\/script>`;
+    html = html.replace('</head>', staticLabel + '\n</head>');
+
     /* 5 — Crear archivo y disparar descarga */
     status.textContent = 'Descargando…';
     const dateSlug = new Date().toISOString().slice(0, 10);
