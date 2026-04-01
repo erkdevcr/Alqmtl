@@ -1003,8 +1003,9 @@ function renderAll(YEARS) {
   function aActivate(idx) {
     if (idx === aActive) return;
     aActive = idx; _aActive = idx;
-    localStorage.setItem('tl_yr_a', idx);
-    localStorage.setItem('tl_yr_id', YEARS[idx].id);
+    localStorage.setItem('tl_yr_a',    idx);
+    localStorage.setItem('tl_yr_id',   YEARS[idx].id);
+    localStorage.setItem('tl_yr_year', YEARS[idx].year);
     document.querySelectorAll('.seg').forEach((s,i) => s.classList.toggle('active', i===idx));
     layoutSegs(idx, true);
     posAccent(idx);
@@ -1199,8 +1200,12 @@ function renderAll(YEARS) {
   } else {
     setViewBtn('accordion');
   }
-  /* Siempre sincronizar tl_yr_id con el año activo actual (incluso en el render inicial) */
-  if (YEARS[aActive]) localStorage.setItem('tl_yr_id', YEARS[aActive].id);
+  /* Siempre sincronizar estado del año activo (incluso en el render inicial) */
+  if (YEARS[aActive]) {
+    localStorage.setItem('tl_yr_a',   aActive);
+    localStorage.setItem('tl_yr_id',  YEARS[aActive].id);
+    localStorage.setItem('tl_yr_year', YEARS[aActive].year);
+  }
 
   layoutSegs(aActive, false);
   posAccent(aActive);
