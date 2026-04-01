@@ -792,6 +792,7 @@ async function loadData() {
 
   /* Construir YEARS en el mismo formato que usaba el HTML original */
   const YEARS = years.map(y => ({
+    id:    y.id,
     year:  y.year,
     cur:   y.is_current,
     items: y.items_label,
@@ -825,6 +826,14 @@ let _dataFP   = '';   /* fingerprint para detectar cambios cross-device */
 ══════════════════════════════════════════ */
 function renderAll(YEARS) {
   _hitoData = [];   /* reset para re-render limpio */
+
+  /* Sincronizar con el año seleccionado en el editor (tl_yr_id = DB id del año) */
+  const savedYrId = localStorage.getItem('tl_yr_id');
+  if (savedYrId) {
+    const idx = YEARS.findIndex(y => String(y.id) === String(savedYrId));
+    if (idx >= 0) { _aActive = idx; _fActive = idx; }
+  }
+
   const segsEl   = document.getElementById('segs');
   const tlAccent = document.getElementById('tlAccent');
   const fcYears  = document.getElementById('fcYears');
@@ -995,6 +1004,7 @@ function renderAll(YEARS) {
     if (idx === aActive) return;
     aActive = idx; _aActive = idx;
     localStorage.setItem('tl_yr_a', idx);
+    localStorage.setItem('tl_yr_id', YEARS[idx].id);
     document.querySelectorAll('.seg').forEach((s,i) => s.classList.toggle('active', i===idx));
     layoutSegs(idx, true);
     posAccent(idx);

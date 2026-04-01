@@ -1154,8 +1154,10 @@ async function loadAll() {
   ]);
   years.sort((a, b) => a.year - b.year);
 
-  /* Guardar filtro activo actual */
-  const activeYrId = document.querySelector('#year-bar .ypill.active')?.dataset.id ?? '';
+  /* Guardar filtro activo actual — o usar el último año visitado en el timeline */
+  const activeYrId = document.querySelector('#year-bar .ypill.active')?.dataset.id
+    ?? localStorage.getItem('tl_yr_id')
+    ?? '';
 
   /* Poblar barra de año */
   const bar = document.getElementById('year-bar');
@@ -1169,6 +1171,7 @@ async function loadAll() {
     pill.addEventListener('click', () => {
       bar.querySelectorAll('.ypill').forEach(p => p.classList.remove('active'));
       pill.classList.add('active');
+      localStorage.setItem('tl_yr_id', pill.dataset.id);   /* sincronizar con timeline */
       renderLaunches(pill.dataset.id, document.getElementById('search-launch').value);
     });
   });
