@@ -705,7 +705,9 @@ function renderYears() {
 
   el.querySelectorAll('input[data-field]').forEach(inp => {
     const ev = inp.type === 'checkbox' ? 'change' : 'blur';
+    if (ev === 'blur') inp.addEventListener('focus', () => { inp.dataset.origVal = inp.value; });
     inp.addEventListener(ev, () => {
+      if (ev === 'blur' && inp.value === (inp.dataset.origVal ?? inp.value)) return;
       const val = inp.type === 'checkbox' ? inp.checked
                 : (inp.type === 'number'  ? Number(inp.value) : inp.value || null);
       saveField(inp.dataset.table, inp.dataset.id, { [inp.dataset.field]: val });
@@ -942,7 +944,9 @@ function renderLaunches(filterYearId = '', searchText = '') {
   /* inputs hitos */
   el.querySelectorAll('[data-field]').forEach(inp => {
     const ev = inp.tagName === 'SELECT' ? 'change' : (inp.type === 'checkbox' ? 'change' : 'blur');
+    if (ev === 'blur') inp.addEventListener('focus', () => { inp.dataset.origVal = inp.value; });
     inp.addEventListener(ev, () => {
+      if (ev === 'blur' && inp.value === (inp.dataset.origVal ?? inp.value)) return;
       let val;
       if (inp.type === 'checkbox') val = inp.checked;
       else if (inp.type === 'number') val = inp.value ? Number(inp.value) : null;
