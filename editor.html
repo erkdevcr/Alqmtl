@@ -89,6 +89,8 @@ body{font-family:var(--font);background:var(--g10);color:var(--fg);min-height:10
 }
 .card-title{font-size:15px;font-weight:600;white-space:nowrap;}
 .card-meta{font-size:12px;color:var(--g60);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:1;min-width:0;}
+.card-status-row{display:flex;gap:5px;flex-wrap:wrap;margin-top:3px;}
+.spill{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:500;padding:1px 7px;border-radius:20px;white-space:nowrap;line-height:1.7;border:1px solid;}
 /* en pantalla pequeña se permite apilar */
 @media(max-width:520px){
   .card-header > div:first-child{flex-wrap:wrap;gap:2px 6px;}
@@ -805,6 +807,28 @@ function setupCardDrag(card, launchId, yearId) {
 }
 
 /* ══════════════════════════════════════════
+   STATUS / REGIÓN — mapas de color y pill
+══════════════════════════════════════════ */
+const STATUS_COLORS = {
+  'Por Activar':   '#fdab3d', 'Activo':           '#00c875',
+  'Pausado':       '#757575', 'En producción':    '#037f4c',
+  'PT entregado':  '#401694', 'PILOTO CR':        '#74afcc',
+  'PILOTO GUATEMALA':'#579bfc','PILOTO NICARAGUA': '#cab641',
+  'Piloto CR + USA':'#ff5ac4','CANCELADO':        '#bb3354',
+};
+const REGION_COLORS = {
+  'Definido Lanzamiento en región':'#fdab3d',
+  'Listo':'#00c875', 'Estancado':'#df2f4a',
+  'Por definir':'#007eb5',
+  'Esperando revisión/aprobación':'#579bfc',
+};
+function statusPill(val, map, label) {
+  if (!val) return '';
+  const c = map[val] || '#888';
+  return `<span class="spill" style="color:${c};border-color:${c}55;background:${c}18"><span style="width:6px;height:6px;border-radius:50%;background:${c};display:inline-block;flex-shrink:0"></span>${label}: ${val}</span>`;
+}
+
+/* ══════════════════════════════════════════
    RENDER HITOS
 ══════════════════════════════════════════ */
 function renderLaunches(filterYearId = '', searchText = '') {
@@ -859,14 +883,23 @@ function renderLaunches(filterYearId = '', searchText = '') {
     const card = document.createElement('div');
     card.className = 'card';
     card.dataset.launchId = l.id;
+    const statusRowHtml = (l.launch_status || l.region) ? `
+      <div class="card-status-row">
+        ${statusPill(l.launch_status, STATUS_COLORS, 'Status')}
+        ${statusPill(l.region, REGION_COLORS, 'Región')}
+      </div>` : '';
+
     card.innerHTML = `
       <div class="card-header" data-id="${l.id}">
-        <div>
-          <div class="card-title">
-            <span class="year-pill">${y ? y.year : '?'}</span>
-            &nbsp;${l.name}${tagBadge(l)}
+        <div style="display:flex;flex-direction:column;gap:2px;min-width:0;flex:1;overflow:hidden;">
+          <div style="display:flex;align-items:baseline;gap:10px;min-width:0;overflow:hidden;">
+            <div class="card-title">
+              <span class="year-pill">${y ? y.year : '?'}</span>
+              &nbsp;${l.name}${tagBadge(l)}
+            </div>
+            <div class="card-meta">${metaHtml}</div>
           </div>
-          <div class="card-meta">${metaHtml}</div>
+          ${statusRowHtml}
         </div>
         <div class="card-actions">
           ${dragHandle}
@@ -913,6 +946,20 @@ function renderLaunches(filterYearId = '', searchText = '') {
           <div class="form-group">
             <label>Cantidad items</label>
             <input type="number" value="${l.item_count||''}" data-table="timeline_launches" data-id="${l.id}" data-field="item_count">
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select data-table="timeline_launches" data-id="${l.id}" data-field="launch_status">
+              <option value="" ${!l.launch_status?'selected':''}>Sin status</option>
+              ${Object.keys(STATUS_COLORS).map(s=>`<option value="${s}" ${l.launch_status===s?'selected':''}>${s}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Región</label>
+            <select data-table="timeline_launches" data-id="${l.id}" data-field="region">
+              <option value="" ${!l.region?'selected':''}>Sin región</option>
+              ${Object.keys(REGION_COLORS).map(r=>`<option value="${r}" ${l.region===r?'selected':''}>${r}</option>`).join('')}
+            </select>
           </div>
           <div class="form-group full">
             <label>Detalle</label>
@@ -1007,6 +1054,18 @@ function renderLaunches(filterYearId = '', searchText = '') {
               const datePart  = launchObj.launch_date
                 ? `<strong>${fmtDate(launchObj.launch_date)}</strong>` : '';
               meta.innerHTML  = [itemsPart, datePart].filter(Boolean).join(' · ');
+            }
+          } else if (field === 'launch_status' || field === 'region') {
+            launchObj[field] = val || null;
+            let row = card.querySelector('.card-status-row');
+            const newHtml = statusPill(launchObj.launch_status, STATUS_COLORS, 'Status') +
+                            statusPill(launchObj.region,         REGION_COLORS, 'Región');
+            if (row) {
+              row.innerHTML = newHtml;
+              if (!newHtml) row.remove();
+            } else if (newHtml) {
+              const headerLeft = card.querySelector('.card-header > div');
+              if (headerLeft) headerLeft.insertAdjacentHTML('beforeend', `<div class="card-status-row">${newHtml}</div>`);
             }
           }
         }
